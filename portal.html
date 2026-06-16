@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meriwether &amp; Tharp | Client Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#1B2A4A; --navy-mid:#243356; --navy-light:#2E4170;
+  --gold:#C9A84C; --gold-light:#E2C97A; --gold-muted:#8B6F2E;
+  --parchment:#F7F5F0; --parchment-dk:#EDE9E0;
+  --border:#D9D1C0; --border-light:#EAE4D8;
+  --slate:#4A5568; --slate-light:#718096;
+  --text:#1A202C; --text-muted:#6B7280;
+  --success:#2D6A4F; --success-bg:#D8F3DC;
+  --warning:#B45309; --warning-bg:#FEF3C7;
+  --danger:#9B1C1C; --danger-bg:#FEE2E2;
+  --info:#1E40AF; --info-bg:#DBEAFE;
+  --sidebar-w:240px; --sidebar-col:64px; --topbar-h:60px;
+  --radius:8px; --radius-lg:12px;
+  --shadow:0 1px 4px rgba(27,42,74,.08),0 4px 16px rgba(27,42,74,.06);
+  --shadow-lg:0 4px 24px rgba(27,42,74,.14);
+  --font-d:'Playfair Display',Georgia,serif;
+  --font-b:'Inter',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:var(--font-b);background:var(--parchment);color:var(--text);min-height:100vh}
+a{cursor:pointer;text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);position:relative;overflow:hidden}
+.login-bg{position:absolute;right:0;top:0;bottom:0;width:42%;background:linear-gradient(135deg,var(--navy-mid),var(--navy-light));clip-path:polygon(8% 0%,100% 0%,100% 100%,0% 100%);opacity:.6}
+.login-card{background:#fff;border-radius:var(--radius-lg);padding:48px 44px;width:100%;max-width:420px;box-shadow:var(--shadow-lg);position:relative;z-index:2;border-top:4px solid var(--gold)}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+.logo-mark{width:52px;height:52px;background:var(--navy);color:var(--gold);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0}
+.firm-name-main{display:block;font-family:var(--font-d);font-size:15px;font-weight:600;color:var(--navy);line-height:1.2}
+.firm-name-sub{display:block;font-size:11px;color:var(--slate-light);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.login-heading{font-family:var(--font-d);font-size:26px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.login-subheading{font-size:13.5px;color:var(--text-muted);margin-bottom:28px;line-height:1.5}
+.login-error{background:var(--danger-bg);color:var(--danger);border:1px solid #fca5a5;border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:16px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12.5px;font-weight:500;color:var(--slate);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--text);background:var(--parchment);transition:border-color .2s,box-shadow .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,74,.08);background:#fff}
+.form-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.checkbox-label{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--slate);cursor:pointer}
+.forgot-link{font-size:13px;color:var(--gold-muted);font-weight:500}
+.forgot-link:hover{color:var(--gold)}
+.btn-primary{background:var(--navy);color:#fff;padding:12px 22px;border-radius:var(--radius);font-size:14px;font-weight:600;transition:background .2s}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-full{width:100%}
+.login-footer{text-align:center;font-size:11.5px;color:var(--slate-light);margin-top:16px}
+.login-divider{text-align:center;position:relative;margin:20px 0;color:var(--text-muted);font-size:12px}
+.login-divider::before{content:'';position:absolute;top:50%;left:0;right:0;border-top:1px solid var(--border)}
+.login-divider span{background:#fff;padding:0 10px;position:relative}
+.btn-azure{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 22px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-weight:500;color:var(--slate);background:#fff;transition:border-color .2s}
+.btn-azure:hover{border-color:#0078D4;box-shadow:0 0 0 3px rgba(0,120,212,.08)}
+
+/* LAYOUT */
+.portal-layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;transition:width .25s;border-right:3px solid var(--gold);overflow:hidden}
+.sidebar.collapsed{width:var(--sidebar-col)}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .nav-section-label,.sidebar.collapsed .nav-badge,.sidebar.collapsed .sidebar-tagline,.sidebar.collapsed .sidebar-firm,.sidebar.collapsed .user-info{display:none}
+.sidebar.collapsed .nav-item{justify-content:center;padding:10px}
+.sidebar.collapsed .sidebar-logo{justify-content:center}
+.sidebar.collapsed #collapse-btn{transform:rotate(180deg)}
+.sidebar-header{padding:20px 16px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,168,76,.2);flex-shrink:0}
+.sidebar-logo{display:flex;align-items:center;gap:10px;overflow:hidden}
+.logo-mark-sm{width:36px;height:36px;background:var(--gold);color:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:11px;flex-shrink:0}
+.sidebar-firm{font-family:var(--font-d);font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap}
+.sidebar-tagline{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;margin-top:1px}
+#collapse-btn{color:rgba(255,255,255,.4);font-size:18px;padding:4px 6px;border-radius:4px;transition:color .2s,transform .25s;line-height:1;flex-shrink:0}
+#collapse-btn:hover{color:var(--gold)}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.3);padding:14px 8px 4px;white-space:nowrap}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:6px;color:rgba(255,255,255,.65);font-size:13.5px;transition:background .15s,color .15s;cursor:pointer;white-space:nowrap;margin-bottom:1px}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(201,168,76,.18);color:var(--gold-light);font-weight:500}
+.nav-icon{width:18px;height:18px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid rgba(201,168,76,.15);flex-shrink:0;overflow:hidden}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-name{font-size:13px;font-weight:500;color:#fff;white-space:nowrap}
+.user-case{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap}
+#logout-btn{margin-left:auto;color:rgba(255,255,255,.3);padding:4px;border-radius:4px;flex-shrink:0;transition:color .2s}
+#logout-btn:hover{color:var(--gold)}
+
+/* MAIN */
+.main-wrapper{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .25s}
+.main-wrapper.collapsed{margin-left:var(--sidebar-col)}
+.top-bar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.top-bar-left{display:flex;align-items:center;gap:14px}
+.page-breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px}
+.breadcrumb-firm{color:var(--text-muted)}
+.breadcrumb-sep{color:var(--border)}
+.breadcrumb-page{color:var(--navy);font-weight:600}
+.top-bar-right{display:flex;align-items:center;gap:10px}
+.connection-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);background:var(--parchment);padding:4px 10px;border-radius:20px;border:1px solid var(--border-light)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#10B981}
+.icon-btn{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--slate);position:relative;transition:background .15s}
+.icon-btn:hover{background:var(--parchment)}
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--gold);border-radius:50%;border:1px solid #fff}
+.mobile-menu-btn{display:none;font-size:20px;color:var(--navy);padding:4px 8px}
+.content-area{flex:1;padding:28px 28px 40px;max-width:1200px;width:100%}
+
+/* PAGE COMPONENTS */
+.page-header{margin-bottom:24px}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:600;color:var(--navy);line-height:1.2}
+.page-subtitle{font-size:13.5px;color:var(--text-muted);margin-top:4px}
+.page-actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.card{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border-light);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600;color:var(--navy);font-family:var(--font-d)}
+.card-body{padding:20px}
+.card-footer{padding:14px 20px;border-top:1px solid var(--border-light);background:var(--parchment)}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.stat-tile{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:20px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600}
+.stat-value{font-family:var(--font-d);font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.stat-note{font-size:12px;color:var(--text-muted)}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:500}
+.badge-success{background:var(--success-bg);color:var(--success)}
+.badge-warning{background:var(--warning-bg);color:var(--warning)}
+.badge-danger{background:var(--danger-bg);color:var(--danger)}
+.badge-info{background:var(--info-bg);color:var(--info)}
+.badge-neutral{background:var(--parchment-dk);color:var(--slate)}
+.btn-sm{padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all .15s}
+.btn-outline{border:1.5px solid var(--border);color:var(--slate);background:#fff}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn-gold{background:var(--gold);color:var(--navy);font-weight:600}
+.btn-gold:hover{background:var(--gold-light)}
+.data-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.data-table th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border-light);background:var(--parchment)}
+.data-table td{padding:12px 14px;border-bottom:1px solid var(--border-light);color:var(--text);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover td{background:var(--parchment)}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:10px}
+.empty-icon{font-size:36px;opacity:.3;margin-bottom:4px}
+.empty-title{font-size:15px;font-weight:600;color:var(--slate)}
+.empty-text{font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.5}
+.alert-banner{background:var(--info-bg);border:1px solid #bfdbfe;border-radius:var(--radius);padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--info);margin-bottom:20px}
+.attorney-card{display:flex;align-items:center;gap:14px;padding:16px}
+.attorney-avatar{width:48px;height:48px;border-radius:50%;background:var(--navy);color:var(--gold);font-family:var(--font-d);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.attorney-name{font-weight:600;font-size:14px;color:var(--navy)}
+.attorney-role{font-size:12px;color:var(--text-muted);margin-top:2px}
+.attorney-contact{margin-top:6px;display:flex;gap:10px}
+.contact-link{font-size:12px;color:var(--gold-muted);font-weight:500}
+.contact-link:hover{color:var(--gold)}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border-light);border-radius:var(--radius);overflow:hidden}
+.cal-day-header{padding:8px 4px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);background:var(--parchment);border-bottom:1px solid var(--border-light)}
+.cal-day{min-height:90px;padding:6px;border-right:1px solid var(--border-light);border-bottom:1px solid var(--border-light);font-size:12px;cursor:pointer;transition:background .15s}
+.cal-day:hover{background:var(--parchment)}
+.cal-day.other-month{opacity:.4}
+.cal-day.today .cal-date{background:var(--navy);color:#fff;border-radius:50%}
+.cal-day.has-event{border-left:3px solid var(--gold)}
+.cal-date{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;margin-bottom:4px}
+.cal-event{background:var(--info-bg);color:var(--info);border-radius:3px;padding:2px 5px;font-size:10.5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-event.type-deadline{background:var(--warning-bg);color:var(--warning)}
+.cal-event.type-hearing{background:var(--danger-bg);color:var(--danger)}
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border-light)}
+.task-item:last-child{border-bottom:none}
+.task-check{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s}
+.task-check.done{background:var(--success);border-color:var(--success);color:#fff;font-size:10px}
+.task-check:hover:not(.done){border-color:var(--navy)}
+.task-content{flex:1}
+.task-title{font-size:14px;font-weight:500;color:var(--text)}
+.task-title.done-text{text-decoration:line-through;color:var(--text-muted)}
+.task-meta{font-size:12px;color:var(--text-muted);margin-top:3px;display:flex;gap:10px;align-items:center}
+.mbs-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.mbs-section-title{font-family:var(--font-d);font-size:15px;font-weight:600;color:var(--navy);padding:10px 14px;background:var(--parchment);border-bottom:1px solid var(--border-light)}
+.pct-input{width:58px;padding:4px 6px;border:1.5px solid var(--border);border-radius:5px;font-size:12.5px;text-align:right;font-family:var(--font-b);color:var(--navy);background:var(--parchment);transition:border-color .15s,box-shadow .15s}
+.pct-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15);background:#fff}
+.pct-input.overridden{border-color:var(--gold);background:#FFFBF0;font-weight:600}
+.scenario-banner{background:linear-gradient(135deg,#FFFBF0,#FFF8E8);border:1.5px solid var(--gold);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.scenario-banner .s-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gold-muted)}
+.scenario-banner .s-val{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--navy)}
+.scenario-banner .s-note{font-size:11.5px;color:var(--text-muted)}
+.scenario-item{display:flex;flex-direction:column;gap:2px;padding:0 16px;border-left:1px solid var(--border)}
+.scenario-item:first-child{border-left:none;padding-left:0}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:36px 20px;text-align:center;cursor:pointer;background:var(--parchment);transition:border-color .2s,background .2s}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold);background:#fffbf0}
+.upload-icon{font-size:32px;margin-bottom:10px}
+.upload-text{font-size:14px;color:var(--slate)}
+.upload-subtext{font-size:12px;color:var(--text-muted);margin-top:4px}
+.sf-category{border:1px solid var(--border-light);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.sf-category-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--parchment);cursor:pointer;user-select:none;transition:background .15s}
+.sf-category-header:hover{background:var(--parchment-dk)}
+.sf-category-label{flex:1;font-weight:600;font-size:13.5px;color:var(--navy)}
+.sf-category-count{font-size:12px;color:var(--text-muted)}
+.sf-category-body{padding:0;display:none}
+.sf-category-body.open{display:block}
+.sf-file-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid var(--border-light);transition:background .15s}
+.sf-file-row:hover{background:var(--parchment)}
+.sf-upload-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--gold);border-radius:var(--radius);font-size:12px;font-weight:600;color:var(--gold-muted);background:transparent;cursor:pointer;transition:all .15s;font-family:inherit}
+.sf-upload-btn:hover{background:var(--gold);color:var(--navy)}
+.sf-upload-btn:disabled{opacity:.45;cursor:not-allowed}
+.sf-progress{height:4px;background:var(--border-light);border-radius:2px;overflow:hidden;margin-top:6px}
+.sf-progress-bar{height:100%;background:var(--gold);border-radius:2px;transition:width .3s ease;width:0}
+.integration-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:500;padding:3px 8px;border-radius:4px;background:var(--parchment-dk);color:var(--slate);border:1px solid var(--border-light)}
+.integration-badge.azure{color:#0078D4;background:#eef6ff;border-color:#bfdbfe}
+.integration-badge.sf{color:var(--success);background:var(--success-bg);border-color:#a7f3d0}
+.modal-overlay{position:fixed;inset:0;background:rgba(27,42,74,.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;box-shadow:var(--shadow-lg);border-top:3px solid var(--gold);max-height:80vh;display:flex;flex-direction:column}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border-light)}
+.modal-header h3{font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--navy)}
+.modal-close{color:var(--text-muted);font-size:16px;padding:4px 7px;border-radius:4px;transition:color .15s,background .15s}
+.modal-close:hover{background:var(--parchment);color:var(--navy)}
+.modal-body{padding:22px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border-light);display:flex;justify-content:flex-end;gap:10px;background:var(--parchment);border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:2000}
+.toast{background:var(--navy);color:#fff;padding:12px 18px;border-radius:var(--radius);font-size:13.5px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:8px;animation:slideIn .25s ease;max-width:320px}
+.toast.toast-success{background:var(--success)}
+.toast.toast-error{background:var(--danger)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s,width .25s}
+  .sidebar.mobile-open{transform:translateX(0);width:var(--sidebar-w)}
+  .main-wrapper{margin-left:0!important}
+  .mobile-menu-btn{display:block}
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
+  .mbs-totals{grid-template-columns:1fr}
+  .content-area{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark">M&amp;T</div>
+      <div class="login-firm-name">
+        <span class="firm-name-main">Meriwether &amp; Tharp</span>
+        <span class="firm-name-sub">Client Portal</span>
+      </div>
+    </div>
+    <h1 class="login-heading">Welcome Back</h1>
+    <p class="login-subheading">Sign in to access your case files and updates.</p>
+    <div id="login-error" class="login-error hidden">Please enter your email and password.</div>
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <div class="form-options">
+      <label class="checkbox-label"><input type="checkbox"> <span>Remember me</span></label>
+      <a href="#" class="forgot-link">Forgot password?</a>
+    </div>
+    <button class="btn-primary btn-full" id="login-btn">Sign In Securely</button>
+    <div class="login-footer">&#128274; Protected by Microsoft Azure Active Directory</div>
+    <div class="login-divider"><span>or</span></div>
+    <button class="btn-azure" id="azure-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M11.5 2L2 7.5V16.5L11.5 22L21 16.5V7.5L11.5 2Z" fill="#0078D4"/>
+        <path d="M11.5 2V22M2 7.5L21 7.5M2 16.5H21" stroke="white" stroke-width="1.2"/>
+      </svg>
+      Continue with Microsoft
+    </button>
+
+    <!-- DEV TEST PANEL — remove or hide in production -->
+    <div id="dev-panel" style="margin-top:24px;border:1.5px dashed #C9A84C;border-radius:8px;overflow:hidden">
+      <div style="background:#1B2A4A;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" id="dev-panel-toggle">
+        <span style="color:#C9A84C;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px">&#128295; Developer Test Accounts</span>
+        <span style="color:#C9A84C;font-size:14px" id="dev-panel-arrow">&#9660;</span>
+      </div>
+      <div id="dev-panel-body" style="background:#FFFBF0;padding:12px 14px">
+        <p style="font-size:11.5px;color:#6B7280;margin-bottom:10px">Click a row to auto-fill credentials. Password is always <strong>test</strong>.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px" id="test-accounts-table">
+          <thead>
+            <tr style="background:#EDE9E0">
+              <th style="padding:6px 8px;text-align:left;color:#4A5568;font-weight:600">Name</th>
+              <th style="padding:6px 8px;text-align:left;color:#4A5568;font-weight:600">Email</th>
+              <th style="padding:6px 8px;text-align:left;color:#4A5568;font-weight:600">Matter ID</th>
+              <th style="padding:6px 8px;text-align:left;color:#4A5568;font-weight:600">Case #</th>
+            </tr>
+          </thead>
+          <tbody id="test-accounts-body"></tbody>
+        </table>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #EAE4D8">
+          <label style="font-size:11px;font-weight:600;color:#4A5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Or enter a MatterId directly:</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="dev-matter-id" placeholder="e.g. 12345" style="flex:1;padding:7px 10px;border:1.5px solid #D9D1C0;border-radius:6px;font-size:13px;font-family:inherit">
+            <button id="dev-matter-go" style="background:#1B2A4A;color:#C9A84C;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit">Go</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END DEV PANEL -->
+
+  </div>
+  <div class="login-bg"></div>
+</div>
+
+<div id="portal-layout" class="portal-layout hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-mark-sm">M&amp;T</div>
+        <div>
+          <div class="sidebar-firm">Meriwether &amp; Tharp</div>
+          <div class="sidebar-tagline">Client Portal</div>
+        </div>
+      </div>
+      <button id="collapse-btn" title="Collapse">&#8249;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item active" data-page="home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <div class="nav-section-label">My Case</div>
+      <a class="nav-item" data-page="calendar">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2V6M8 2V6M3 10H21" stroke-linecap="round"/></svg>
+        <span class="nav-label">Case Calendar</span>
+      </a>
+      <a class="nav-item" data-page="tasks">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12L11 14L15 10M3 6H21M3 12H21M3 18H21" stroke-linecap="round"/></svg>
+        <span class="nav-label">Case Tasks</span>
+      </a>
+      <a class="nav-item" data-page="issues">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16H12.01" stroke-linecap="round"/></svg>
+        <span class="nav-label">Legal Issues</span>
+      </a>
+      <a class="nav-item" data-page="mbs">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Marital Balance Sheet</span>
+      </a>
+      <div class="nav-section-label">Documents</div>
+      <a class="nav-item" data-page="files">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19C22 20.1 21.1 21 20 21H4C2.9 21 2 20.1 2 19V5C2 3.9 2.9 3 4 3H9L11 6H20C21.1 6 22 6.9 22 8V19Z"/></svg>
+        <span class="nav-label">File Manager</span>
+        <span class="nav-badge">3</span>
+      </a>
+      <div class="nav-section-label">Account</div>
+      <a class="nav-item" data-page="settings">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">RG</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Rachel Geller</div>
+        <div class="user-case" id="user-case">Case #11114-2</div>
+      </div>
+      <button id="logout-btn" title="Sign out">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H9M16 17L21 12L16 7M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-wrapper" id="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
+        <div class="page-breadcrumb">
+          <span class="breadcrumb-firm">Meriwether &amp; Tharp</span>
+          <span class="breadcrumb-sep">&#8250;</span>
+          <span class="breadcrumb-page" id="breadcrumb-page">Dashboard</span>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <div class="connection-status">
+          <span class="status-dot"></span><span>Connected</span>
+        </div>
+        <div id="matter-id-badge" style="display:flex;align-items:center;gap:6px;background:#EDE9E0;border:1.5px solid #D9D1C0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;user-select:none" title="Click to switch MatterId" id="matter-switcher">
+          <span style="color:#6B7280">Matter:</span>
+          <span style="font-weight:600;color:#1B2A4A" id="topbar-matter-id">—</span>
+          <span style="color:#C9A84C;font-size:10px">&#9998;</span>
+        </div>
+        <button class="icon-btn" title="Notifications">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+      </div>
+    </header>
+    <main class="content-area" id="content-area"></main>
+  </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title"></h3>
+      <button class="modal-close" id="modal-close-btn">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script>
+
+// ── MOCK DATA ──────────────────────────────────────────
+var MockData = {
+  user: {
+    name: 'Rachel Geller', initials: 'RG',
+    email: 'rachel.geller@email.com', caseNumber: 'Case #11114-2',
+    attorney: { name: 'Robert Tharp', role: 'Lead Attorney', initials: 'RT',
+      email: 'rtharp@mtlawoffice.com', phone: '(678) 879-9000' }
+  },
+  tasks: [
+    { id:1, title:'Return completed financial affidavit', due:'2024-07-15', priority:'high', done:false, who:'Client' },
+    { id:2, title:'Provide bank statements (Jan-Jun 2024)', due:'2024-07-18', priority:'high', done:false, who:'Client' },
+    { id:3, title:'Review draft parenting plan', due:'2024-07-22', priority:'medium', done:false, who:'Client' },
+    { id:4, title:'Sign amended discovery responses', due:'2024-06-28', priority:'low', done:true, who:'Client' },
+    { id:5, title:'File motion for temporary support', due:'2024-07-30', priority:'high', done:false, who:'Attorney' }
+  ],
+  events: [
+    { id:1, title:'Deposition', date:'2024-07-10', type:'hearing', time:'10:00 AM', loc:'Offices of M&T' },
+    { id:2, title:'Doc Deadline', date:'2024-07-15', type:'deadline', time:'EOD', loc:'' },
+    { id:3, title:'Mediation', date:'2024-07-23', type:'hearing', time:'9:00 AM', loc:'JAMS Atlanta' },
+    { id:4, title:'Status Call', date:'2024-07-29', type:'meeting', time:'2:00 PM', loc:'Phone' }
+  ],
+  issues: [
+    { id:1, issue:'Child Custody & Parenting Time', status:'In Negotiation', priority:'high', updated:'2024-07-02', notes:'Parties near 70/30 split; mediation scheduled.' },
+    { id:2, issue:'Equitable Division of Marital Home', status:'Pending Appraisal', priority:'high', updated:'2024-06-28', notes:'Third-party appraisal ordered by court.' },
+    { id:3, issue:'Alimony / Spousal Support', status:'Contested', priority:'high', updated:'2024-07-01', notes:'Counterparty filed opposition.' },
+    { id:4, issue:'Division of Retirement Accounts', status:'QDRO Pending', priority:'medium', updated:'2024-06-20', notes:'QDRO attorney retained.' },
+    { id:5, issue:'Business Valuation', status:'Under Review', priority:'medium', updated:'2024-06-15', notes:'CPA forensic analysis underway.' },
+    { id:6, issue:'Child Support Calculation', status:'Agreed in Principle', priority:'low', updated:'2024-07-03', notes:'CS worksheet pending final income figures.' }
+  ],
+  assets: [
+    { id:1, cat:'Real Property', desc:'Marital Residence — 123 Oak St, Atlanta', val:485000, marital:true, notes:'Appraisal pending' },
+    { id:2, cat:'Financial', desc:'Chase Joint Checking', val:14250, marital:true, notes:'' },
+    { id:3, cat:'Financial', desc:'Wells Fargo Savings (H)', val:32000, marital:true, notes:'' },
+    { id:4, cat:'Retirement', desc:'401(k) — Husband (Vanguard)', val:210000, marital:true, notes:'QDRO pending' },
+    { id:5, cat:'Retirement', desc:'IRA — Wife (Fidelity)', val:87500, marital:true, notes:'' },
+    { id:6, cat:'Vehicles', desc:'2022 Toyota Camry', val:24000, marital:true, notes:'' },
+    { id:7, cat:'Vehicles', desc:'2020 Ford F-150', val:31000, marital:true, notes:'' }
+  ],
+  liabilities: [
+    { id:1, cat:'Mortgage', desc:'Mortgage — Marital Residence', val:287000, marital:true, notes:'' },
+    { id:2, cat:'Auto Loan', desc:'Toyota Camry Loan', val:9400, marital:true, notes:'' },
+    { id:3, cat:'Credit Card', desc:'Amex Joint Card', val:6200, marital:true, notes:'' },
+    { id:4, cat:'Credit Card', desc:'Chase Visa — Husband', val:2800, marital:false, notes:'Separate debt claim disputed' }
+  ],
+  files: [
+    { id:1, name:'Financial Affidavit Template.pdf', size:'218 KB', uploaded:'2024-07-01', source:'Attorney Upload', cat:'Forms' },
+    { id:2, name:'Temporary Order — June 2024.pdf', size:'84 KB', uploaded:'2024-06-30', source:'Court', cat:'Court Orders' },
+    { id:3, name:'Property Appraisal Request.docx', size:'55 KB', uploaded:'2024-06-28', source:'Attorney Upload', cat:'Discovery' }
+  ]
+};
+
+// ── UTILITIES ──────────────────────────────────────────
+function fmt$(n) {
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+}
+function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+function fileIcon(name) {
+  var ext = name.split('.').pop().toLowerCase();
+  return {pdf:'📄',docx:'📝',doc:'📝',xlsx:'📊',jpg:'🖼',png:'🖼',jpeg:'🖼'}[ext] || '📎';
+}
+function badge(text, cls) { return '<span class="badge ' + cls + '">' + text + '</span>'; }
+function priorityBadge(p) {
+  return badge(p, p==='high'?'badge-danger':p==='medium'?'badge-warning':'badge-neutral');
+}
+function showToast(msg, type) {
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast' + (type==='success'?' toast-success':type==='error'?' toast-error':'');
+  t.innerHTML = (type==='success'?'&#10003; ':type==='error'?'&#10007; ':'&#8505; ') + msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 4000);
+}
+function emptyState(icon, title, text) {
+  return '<div class="empty-state"><div class="empty-icon">' + icon + '</div>'
+    + '<div class="empty-title">' + title + '</div>'
+    + '<div class="empty-text">' + text + '</div></div>';
+}
+function openModal(title, body, footer) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body || '';
+  document.getElementById('modal-footer').innerHTML = footer || '';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+// ── AUTH ───────────────────────────────────────────────
+var currentUser = null;
+
+function handleLogin() {
+  var email = document.getElementById('email').value.trim().toLowerCase();
+  var pass  = document.getElementById('password').value;
+  var err   = document.getElementById('login-error');
+
+  if (!email || !pass) {
+    err.textContent = 'Please enter your email and password.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  // Look up test account by email + password
+  var account = null;
+  for (var i = 0; i < TEST_ACCOUNTS.length; i++) {
+    if (TEST_ACCOUNTS[i].email.toLowerCase() === email && TEST_ACCOUNTS[i].password === pass) {
+      account = TEST_ACCOUNTS[i];
+      break;
+    }
+  }
+
+  if (!account) {
+    err.textContent = 'Email or password not recognized. Use a test account from the dev panel below.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  err.classList.add('hidden');
+  bootPortal(account);
+}
+
+function bootPortal(account) {
+  currentUser = account;
+  API_CONFIG.matterId = account.matterId;
+  clearCaches();
+
+  // Persist session so we can restore it after a ShareFile OAuth redirect
+  try { sessionStorage.setItem('portal_session', JSON.stringify(account)); } catch(e) {}
+
+  document.getElementById('user-name').textContent        = account.name;
+  document.getElementById('user-case').textContent        = account.caseNumber;
+  document.getElementById('user-avatar').textContent      = account.initials;
+  document.getElementById('topbar-matter-id').textContent = account.matterId;
+
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-layout').classList.remove('hidden');
+  navigate('home');
+}
+
+function handleLogout() {
+  currentUser = null;
+  API_CONFIG.matterId = null;
+  clearCaches();
+  SF.clearTokens();
+  try { sessionStorage.removeItem('portal_session'); } catch(e) {}
+  document.getElementById('portal-layout').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('email').value    = '';
+  document.getElementById('password').value = '';
+}
+
+// Switch MatterId mid-session without logging out
+function switchMatterId(newId) {
+  var id = parseInt(newId, 10);
+  if (!id || isNaN(id)) { showToast('Enter a valid MatterId number.', 'error'); return; }
+  API_CONFIG.matterId = id;
+  clearCaches();
+  document.getElementById('topbar-matter-id').textContent = id;
+  if (currentUser) currentUser.matterId = id;
+  showToast('MatterId switched to ' + id + '. Reloading current page...', 'success');
+  setTimeout(function(){ navigate(pages[Object.keys(pages).find(function(k){ return document.querySelector('.nav-item.active') && document.querySelector('.nav-item.active').dataset.page === k; }) || 'home']); navigate('calendar'); }, 800);
+}
+
+// ── NAVIGATION ─────────────────────────────────────────
+var pages = {
+  home:     { label:'Dashboard',             fn:renderDashboard },
+  calendar: { label:'Case Calendar',         fn:renderCalendar  },
+  tasks:    { label:'Case Tasks',            fn:renderTasks     },
+  issues:   { label:'Legal Issues',          fn:renderIssues    },
+  mbs:      { label:'Marital Balance Sheet', fn:renderMBS       },
+  files:    { label:'File Manager',          fn:renderFiles     },
+  settings: { label:'Settings',              fn:renderSettings  }
+};
+
+function navigate(page) {
+  if (!pages[page]) return;
+  document.querySelectorAll('.nav-item').forEach(function(el){
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.getElementById('breadcrumb-page').textContent = pages[page].label;
+  var area = document.getElementById('content-area');
+  area.innerHTML = '';
+  pages[page].fn(area);
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var mw = document.getElementById('main-wrapper');
+  if (window.innerWidth <= 768) {
+    sb.classList.toggle('mobile-open');
+  } else {
+    sb.classList.toggle('collapsed');
+    mw.classList.toggle('collapsed');
+  }
+}
+
+// ── DASHBOARD ──────────────────────────────────────────
+function renderDashboard(el) {
+  var u = currentUser || MockData.user;
+  var pending = TaskCache.data
+    ? TaskCache.data.filter(function(t){ return taskStatusGroup(t.status) !== 'complete'; }).length
+    : MockData.tasks.filter(function(t){ return !t.done; }).length;
+  var totalA  = MockData.assets.reduce(function(s,a){ return s+(a.val||0); }, 0);
+
+  var fileRows = '';
+  MockData.files.slice(0,3).forEach(function(f){
+    fileRows += '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light)">'
+      + '<span style="font-size:20px">' + fileIcon(f.name) + '</span>'
+      + '<div><div style="font-size:13px;font-weight:500">' + f.name + '</div>'
+      + '<div style="font-size:11.5px;color:var(--text-muted)">' + f.uploaded + ' &middot; ' + f.size + '</div></div></div>';
+  });
+
+  // Render shell — staff card and appointment table fill in async
+  el.innerHTML = '<div class="page-header"><div class="page-title">Welcome back, ' + u.name.split(' ')[0] + '</div>'
+    + '<div class="page-subtitle">Here\'s what\'s happening in your case today.</div></div>'
+    + '<div id="dash-alert" class="alert-banner">&#128203; Loading your case information...</div>'
+    + '<div class="grid-4" style="margin-bottom:24px">'
+    + '<div class="stat-tile" id="dash-appt-tile"><div class="stat-label">Upcoming Appointments</div><div class="stat-value">...</div><div class="stat-note">Loading</div></div>'
+    + '<div class="stat-tile"><div class="stat-label">Pending Tasks</div><div class="stat-value">' + pending + '</div></div>'
+    + '<div class="stat-tile"><div class="stat-label">Documents</div><div class="stat-value">' + MockData.files.length + '</div><div class="stat-note">In your case file</div></div>'
+    + '<div class="stat-tile"><div class="stat-label">Known Assets</div><div class="stat-value" style="font-size:20px">' + fmt$(totalA) + '</div><div class="stat-note">Some values pending</div></div>'
+    + '</div>'
+    + '<div class="grid-2" style="margin-bottom:24px">'
+    + '<div class="card"><div class="card-header"><span class="card-title">Upcoming Appointments</span>'
+    + '<button class="btn-sm btn-outline" onclick="navigate(\'calendar\')">Full Calendar</button></div>'
+    + '<div id="dash-appt-table"><div style="text-align:center;padding:28px;color:var(--text-muted)">&#128197; Loading...</div></div></div>'
+    + '<div class="card"><div class="card-header"><span class="card-title">Your Case Team</span>'
+    + '<span id="dash-staff-status" class="badge badge-neutral">Loading...</span></div>'
+    + '<div id="dash-staff-body" class="card-body" style="padding:12px">'
+    + '<div style="text-align:center;padding:20px;color:var(--text-muted)">&#128100; Loading staff...</div>'
+    + '</div></div>'
+    + '</div>'
+    + '<div class="card" style="margin-bottom:24px"><div class="card-header"><span class="card-title">Recent Files</span>'
+    + '<button class="btn-sm btn-outline" onclick="navigate(\'files\')">View All</button></div>'
+    + '<div>' + fileRows + '</div></div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
+    + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
+    + '<span class="integration-badge sf">&#128193; ShareFile</span></div>';
+
+  // ── Fetch case/staff info ───────────────────────────
+  fetchCaseInfo(API_CONFIG.matterId, function(err, caseInfo) {
+    var staffEl   = document.getElementById('dash-staff-body');
+    var statusEl  = document.getElementById('dash-staff-status');
+    if (!staffEl) return;
+
+    if (err || !caseInfo) {
+      statusEl.textContent = 'Unavailable';
+      statusEl.className   = 'badge badge-warning';
+      staffEl.innerHTML    = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Staff information could not be loaded. Please contact the office directly.</p>';
+      return;
+    }
+
+    var staff = caseInfo.staff || [];
+    statusEl.textContent = staff.length + ' member' + (staff.length !== 1 ? 's' : '');
+    statusEl.className   = 'badge badge-success';
+
+    if (!staff.length) {
+      staffEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">No staff members found for this matter.</p>';
+      return;
+    }
+
+    var cards = '';
+    staff.forEach(function(member) {
+      var initials    = member.name ? member.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase() : '?';
+      var bookingUrl  = bookingsUrlForStaff(member.name);
+      var hasBookings = bookingUrl !== API_CONFIG.bookingsFallback || API_CONFIG.bookingsFallback.indexOf('YOUR-') === -1;
+      // member.email comes from EmployeeIdSummary_Email once added to the Logic App Select_EE action
+      var email       = member.email || null;
+
+      cards += '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)">'
+        + '<div class="attorney-avatar" style="width:40px;height:40px;font-size:14px;flex-shrink:0">' + initials + '</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div class="attorney-name">' + member.name + '</div>'
+        + '<div class="attorney-role">' + (member.role || 'Staff') + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;flex-shrink:0">'
+        + (email
+            ? '<a href="mailto:' + email + '" class="btn-sm btn-outline" style="font-size:11.5px;padding:5px 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none">&#9993; Email</a>'
+            : '')
+        + (hasBookings
+            ? '<button class="btn-sm btn-gold" style="font-size:11.5px;padding:5px 10px" onclick="openBookingsForStaff(\'' + member.name.replace(/'/g, "\\'") + '\')">&#128197; Book</button>'
+            : '')
+        + '</div>'
+        + '</div>';
+    });
+
+    staffEl.innerHTML = '<div style="padding:0 4px">' + cards + '</div>';
+  });
+
+  // ── Fetch appointments ──────────────────────────────
+  fetchAppointments(API_CONFIG.matterId, function(err, appts) {
+    var alertEl = document.getElementById('dash-alert');
+    var tileEl  = document.getElementById('dash-appt-tile');
+    var tableEl = document.getElementById('dash-appt-table');
+    if (!alertEl || !tileEl || !tableEl) return;
+
+    var now = new Date();
+    var upcoming = [];
+    (appts || []).forEach(function(appt) {
+      var d = parseApptDate(appt.startUtc);
+      if (d && d >= now) upcoming.push(appt);
+    });
+    upcoming.sort(function(a,b){ return new Date(a.startUtc)-new Date(b.startUtc); });
+    var next = upcoming[0];
+
+    if (err) {
+      alertEl.style.background  = 'var(--warning-bg)';
+      alertEl.style.borderColor = '#fde68a';
+      alertEl.style.color       = 'var(--warning)';
+      alertEl.innerHTML = '&#9888; Could not load your appointments. Please try again or contact your attorney\'s office.';
+    } else if (next) {
+      var nd = parseApptDate(next.startUtc);
+      alertEl.innerHTML = '&#128197; Your next appointment: <strong>' + next.subject + '</strong> on <strong>' + fmtDateShort(nd) + ' at ' + fmtTime(nd) + '</strong>';
+    } else {
+      alertEl.innerHTML = '&#10003; No upcoming appointments scheduled at this time.';
+      alertEl.style.background  = 'var(--success-bg)';
+      alertEl.style.borderColor = '#a7f3d0';
+      alertEl.style.color       = 'var(--success)';
+    }
+
+    tileEl.innerHTML = '<div class="stat-label">Upcoming Appointments</div>'
+      + '<div class="stat-value">' + upcoming.length + '</div>'
+      + '<div class="stat-note">Next: ' + (next ? fmtDateShort(parseApptDate(next.startUtc)) : 'none scheduled') + '</div>';
+
+    if (!upcoming.length) {
+      tableEl.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text-muted)">No upcoming appointments found.</div>';
+      return;
+    }
+    var rows = '';
+    upcoming.slice(0,5).forEach(function(appt) {
+      var start = parseApptDate(appt.startUtc);
+      var end   = parseApptDate(appt.endUtc);
+      var cls   = apptBadgeClass(appt.subject);
+      rows += '<tr><td style="font-weight:500">' + (appt.subject || 'Appointment') + '</td>'
+        + '<td>' + (start ? fmtDateShort(start) : '—') + '</td>'
+        + '<td>' + (start ? fmtTime(start) : '—') + (end ? ' – ' + fmtTime(end) : '') + '</td>'
+        + '<td>' + badge(cls==='badge-danger'?'Hearing/Depo':cls==='badge-warning'?'Deadline':'Appointment', cls) + '</td></tr>';
+    });
+    tableEl.innerHTML = '<table class="data-table"><thead><tr><th>Subject</th><th>Date</th><th>Time</th><th>Type</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table>';
+  });
+}
+
+// ── TEST ACCOUNTS ──────────────────────────────────────
+// Add as many rows as you need. Password is always "test" for all of them.
+// In production, remove this block and replace handleLogin with real auth.
+var TEST_ACCOUNTS = [
+  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: null  /* paste ShareFile folder ID for this client */ },
+  { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matterId:99999, caseNumber:'DEV-OVERRIDE',  homeFolderId: null  }
+];
+
+// ── API CONFIGURATION ──────────────────────────────────
+var API_CONFIG = {
+  // Logic App: Appointments
+  appointmentsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-APPT-SIG',
+
+  // Logic App: Case / Staff
+  caseUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-CASE-SIG',
+
+  // Logic App: Case Tasks
+  tasksUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-TASKS-SIG',
+
+  // Logic App: Legal Issues
+  issuesUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-ISSUES-SIG',
+
+  // Logic App: Marital Balance Sheet
+  mbsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
+
+  // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
+  //
+  // SETUP — three steps, done once:
+  // 1. In ShareFile Admin > Settings > OAuth2 > Allowed Domains  add your portal domain
+  // 2. In your OAuth app registration set Redirect URI to exactly:  [your portal URL]/   (the page itself)
+  // 3. Fill in subdomain, clientId, clientSecret, and redirectUri below
+  //
+  // HOW IT WORKS:
+  // Client clicks "Connect to ShareFile" → redirected to ShareFile login → ShareFile sends
+  // them back here with ?code=... → portal exchanges code for token → stored in sessionStorage
+  // → silent on subsequent visits within the same session (refresh token extends across sessions)
+  //
+  // FOLDER LOOKUP — two options (pick one):
+  //   a) Set homeFolderId per client in TEST_ACCOUNTS (fastest — staff pastes the ID from ShareFile URL)
+  //   b) Leave null and the portal uses the authenticated user's ShareFile home folder automatically
+  shareFile: {
+    subdomain:    'mtlawoffice',          // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
+    clientId:     'buGgEhgv2LFQBw3yKnqCvhROU1uaQlSG',       // from your ShareFile OAuth app registration
+    clientSecret: 'HpqtDRKUb0BUdELomIp3xuV8BtrD6E9uDKgy1BuDUUmRsFj3',   // from your ShareFile OAuth app registration
+    redirectUri:  'file:///C:/apps/MTClientPortalC/portal.html'  // auto-detects current page URL, or paste exact URI here
+  },
+
+  // Required document categories — each becomes a subfolder in the client's ShareFile home folder.
+  // Add, remove, or rename freely. Staff see these same folders in the ShareFile web UI.
+  uploadCategories: [
+    { id: 'financial-affidavit',   label: 'Financial Affidavit',        accept: '.pdf,.docx',       required: true  },
+    { id: 'bank-statements',       label: 'Bank Statements',            accept: '.pdf,.xlsx,.csv',  required: true  },
+    { id: 'tax-returns',           label: 'Tax Returns (Last 3 Years)',  accept: '.pdf',             required: true  },
+    { id: 'pay-stubs',             label: 'Pay Stubs',                  accept: '.pdf,.jpg,.png',   required: true  },
+    { id: 'retirement-statements', label: 'Retirement Statements',      accept: '.pdf',             required: false },
+    { id: 'property-documents',    label: 'Property Documents',         accept: '.pdf,.docx',       required: false },
+    { id: 'business-records',      label: 'Business Records',           accept: '.pdf,.xlsx,.docx', required: false },
+    { id: 'other',                 label: 'Other Documents',            accept: '*',                required: false }
+  ],
+
+  // Bookings map loaded at startup from bookings-config.json — do not edit here
+  staffBookingsMap: {},
+  bookingsFallback: 'https://outlook.office365.com/book/YOUR-BOOKINGS-PAGE',
+
+  // Set by login — do not edit directly
+  matterId: null
+};
+
+// Cache so we don't re-fetch on every month navigation
+var AppointmentCache = { data: null, matterId: null };
+
+// Case/staff info cache
+var CaseCache = { data: null, matterId: null };
+
+function fetchCaseInfo(matterId, callback) {
+  if (CaseCache.data && CaseCache.matterId === matterId) {
+    callback(null, CaseCache.data);
+    return;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.caseUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        // Logic App returns an array with one object: [{ matterId, caseTitle, clientName, staff[] }]
+        var raw  = JSON.parse(xhr.responseText);
+        var data = Array.isArray(raw) ? raw[0] : raw;
+        CaseCache.data = data;
+        CaseCache.matterId = matterId;
+        callback(null, data);
+      } catch(e) {
+        callback('Could not parse case info response.');
+      }
+    } else {
+      callback('Case API returned status ' + xhr.status);
+    }
+  };
+
+  xhr.onerror = function() {
+    // Fall back to mock staff so the UI still renders during development
+    console.warn('[Case API] Network error — using mock staff data.');
+    var mock = {
+      matterId: matterId,
+      caseTitle: 'Geller v. Geller',
+      clientName: (currentUser && currentUser.name) || 'Client',
+      staff: [
+        { name: 'Robert Tharp', role: 'Lead Attorney', email: 'rtharp@mtlawoffice.com' },
+        { name: 'Jane Smith',   role: 'Paralegal',     email: 'jsmith@mtlawoffice.com' }
+      ]
+    };
+    CaseCache.data = mock;
+    CaseCache.matterId = matterId;
+    callback(null, mock);
+  };
+
+  xhr.ontimeout = function() { callback('Case API request timed out.'); };
+  xhr.send(JSON.stringify({ matterId: matterId }));
+}
+
+// Look up a staff member's personal Bookings URL, falling back gracefully
+function bookingsUrlForStaff(staffName) {
+  if (API_CONFIG.staffBookingsMap && API_CONFIG.staffBookingsMap[staffName]) {
+    return API_CONFIG.staffBookingsMap[staffName];
+  }
+  return API_CONFIG.bookingsFallback;
+}
+
+// Clear all caches on matter switch or logout
+function clearCaches() {
+  AppointmentCache.data = null; AppointmentCache.matterId = null;
+  CaseCache.data = null;        CaseCache.matterId = null;
+  TaskCache.data = null;        TaskCache.matterId = null;
+  IssueCache.data = null;       IssueCache.matterId = null;
+  MBSCache.data = null;         MBSCache.matterId = null;
+}
+
+// ── BOOKINGS CONFIG LOADER ─────────────────────────────
+// Loads bookings-config.json at startup so staff can maintain it
+// without touching the portal code.
+function loadBookingsConfig() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'bookings-config.json', true);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var cfg = JSON.parse(xhr.responseText);
+        if (cfg.fallbackUrl) API_CONFIG.bookingsFallback = cfg.fallbackUrl;
+        if (cfg.staff && Array.isArray(cfg.staff)) {
+          cfg.staff.forEach(function(s) {
+            if (s.name && s.bookingsUrl) {
+              API_CONFIG.staffBookingsMap[s.name] = s.bookingsUrl;
+            }
+          });
+        }
+        console.log('[Bookings] Config loaded — ' + Object.keys(API_CONFIG.staffBookingsMap).length + ' staff entries.');
+      } catch(e) {
+        console.warn('[Bookings] Could not parse bookings-config.json:', e);
+      }
+    } else {
+      console.warn('[Bookings] bookings-config.json not found (status ' + xhr.status + '). Using defaults.');
+    }
+  };
+  xhr.onerror = function() {
+    console.warn('[Bookings] bookings-config.json could not be fetched. Running locally? Bookings links will use fallback URL.');
+  };
+  xhr.send();
+}
+
+// ── TASKS API LAYER ────────────────────────────────────
+var TaskCache = { data: null, matterId: null };
+
+function fetchTasks(matterId, callback) {
+  if (TaskCache.data && TaskCache.matterId === matterId) {
+    callback(null, TaskCache.data);
+    return;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.tasksUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var tasks = Array.isArray(data) ? data : (data.value || []);
+        TaskCache.data = tasks;
+        TaskCache.matterId = matterId;
+        callback(null, tasks);
+      } catch(e) {
+        callback('Could not parse tasks response.');
+      }
+    } else {
+      callback('Tasks API returned status ' + xhr.status);
+    }
+  };
+
+  xhr.onerror = function() {
+    console.warn('[Tasks API] Network error — using mock task data.');
+    var mock = [
+      { id:1, title:'Return completed financial affidavit', taskType:'Client Action', status:'Not Started', dueDateUtc:'2024-07-15T23:59:00Z', assignedStaff:'Client',          notes:''                            },
+      { id:2, title:'Provide bank statements (Jan–Jun 2024)', taskType:'Client Action', status:'Not Started', dueDateUtc:'2024-07-18T23:59:00Z', assignedStaff:'Client',          notes:'All accounts required'       },
+      { id:3, title:'Review draft parenting plan',           taskType:'Client Review',  status:'In Progress', dueDateUtc:'2024-07-22T23:59:00Z', assignedStaff:'Client',          notes:'Draft sent via email'        },
+      { id:4, title:'Sign amended discovery responses',      taskType:'Client Action',  status:'Complete',    dueDateUtc:'2024-06-28T23:59:00Z', assignedStaff:'Client',          notes:''                            },
+      { id:5, title:'File motion for temporary support',     taskType:'Court Filing',   status:'In Progress', dueDateUtc:'2024-07-30T23:59:00Z', assignedStaff:'Robert Tharp', notes:'Drafting in progress'        },
+      { id:6, title:'Order property appraisal',              taskType:'Administrative', status:'Complete',    dueDateUtc:'2024-06-20T23:59:00Z', assignedStaff:'Jane Smith',   notes:'Appraiser confirmed Jul 14'  },
+      { id:7, title:'Prepare financial disclosure',          taskType:'Court Filing',   status:'Not Started', dueDateUtc:'2024-08-01T23:59:00Z', assignedStaff:'Robert Tharp', notes:''                            }
+    ];
+    TaskCache.data = mock;
+    TaskCache.matterId = matterId;
+    callback(null, mock);
+  };
+
+  xhr.ontimeout = function() { callback('Tasks API request timed out.'); };
+  xhr.send(JSON.stringify({ matterId: matterId }));
+}
+
+// Normalise Aderant status strings into display groups
+function taskStatusGroup(status) {
+  if (!status) return 'open';
+  var s = status.toLowerCase();
+  if (s === 'complete' || s === 'completed' || s === 'closed') return 'complete';
+  if (s === 'in progress' || s === 'in-progress') return 'inprogress';
+  return 'open'; // Not Started, Pending, etc.
+}
+
+function taskStatusBadge(status) {
+  var g = taskStatusGroup(status);
+  if (g === 'complete')   return badge(status || 'Complete',    'badge-success');
+  if (g === 'inprogress') return badge(status || 'In Progress', 'badge-info');
+  return badge(status || 'Not Started', 'badge-neutral');
+}
+
+function taskTypeBadge(type) {
+  if (!type) return '';
+  var t = type.toLowerCase();
+  if (t.indexOf('court') > -1 || t.indexOf('filing') > -1) return badge(type, 'badge-danger');
+  if (t.indexOf('client') > -1)                            return badge(type, 'badge-warning');
+  return badge(type, 'badge-neutral');
+}
+
+function fetchAppointments(matterId, callback) {
+  // Return cache if same matter
+  if (AppointmentCache.data && AppointmentCache.matterId === matterId) {
+    callback(null, AppointmentCache.data);
+    return;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.appointmentsUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        // Logic App returns array directly from Select_Appointments
+        var appts = Array.isArray(data) ? data : (data.value || []);
+        AppointmentCache.data = appts;
+        AppointmentCache.matterId = matterId;
+        callback(null, appts);
+      } catch(e) {
+        callback('Could not parse response from server.');
+      }
+    } else {
+      callback('Server returned status ' + xhr.status + '. Check Logic App URL and CORS settings.');
+    }
+  };
+
+  xhr.onerror = function() {
+    // Likely a CORS issue or network error — fall back to mock data for development
+    console.warn('[Appointments API] Network error — using mock data. Configure CORS on the Logic App for production.');
+    callback(null, MockData.events.map(function(ev) {
+      return { id: ev.id, subject: ev.title, startUtc: ev.date + 'T' + (ev.time || '09:00') + ':00Z', endUtc: ev.date + 'T10:00:00Z', matterId: API_CONFIG.matterId };
+    }));
+  };
+
+  xhr.ontimeout = function() { callback('Request timed out. Check that the Logic App is running.'); };
+
+  xhr.send(JSON.stringify({ matterId: matterId }));
+}
+
+// Parse a UTC ISO string into a local Date object
+function parseApptDate(isoStr) {
+  return isoStr ? new Date(isoStr) : null;
+}
+
+// Format time as "9:00 AM" from a Date
+function fmtTime(d) {
+  if (!d) return '';
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// Format date as "Mon, Jul 10" from a Date
+function fmtDateShort(d) {
+  if (!d) return '';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+// Determine badge color from subject keywords (expand as needed)
+function apptBadgeClass(subject) {
+  if (!subject) return 'badge-info';
+  var s = subject.toLowerCase();
+  if (s.indexOf('hearing') > -1 || s.indexOf('trial') > -1 || s.indexOf('deposition') > -1) return 'badge-danger';
+  if (s.indexOf('deadline') > -1 || s.indexOf('due') > -1 || s.indexOf('filing') > -1) return 'badge-warning';
+  if (s.indexOf('mediation') > -1) return 'badge-warning';
+  return 'badge-info';
+}
+
+// Calendar view state (tracks which month is displayed)
+var CalState = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),  // 0-indexed
+  appointments: []
+};
+
+// ── CALENDAR PAGE ──────────────────────────────────────
+function renderCalendar(el) {
+  // Show skeleton while loading
+  el.innerHTML = '<div class="page-header"><div class="page-title">Case Calendar</div>'
+    + '<div class="page-subtitle">All appointments and scheduled events for your case.</div></div>'
+    + '<div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
+    + '<div style="font-size:28px;margin-bottom:12px">&#128197;</div>'
+    + '<div style="font-weight:500">Loading appointments...</div>'
+    + '<div style="font-size:12px;margin-top:6px;color:var(--text-muted)">Please wait</div>'
+    + '</div></div>';
+
+  fetchAppointments(API_CONFIG.matterId, function(err, appts) {
+    if (err) {
+      el.innerHTML = '<div class="page-header"><div class="page-title">Case Calendar</div></div>'
+        + '<div class="card"><div class="card-body">'
+        + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
+        + '&#9888; Your appointments could not be loaded at this time. Please try again or contact your attorney\'s office.</div>'
+        + '</div></div>';
+      CalState.appointments = MockData.events.map(function(ev) {
+        return { id:ev.id, subject:ev.title, startUtc: ev.date+'T09:00:00Z', endUtc: ev.date+'T10:00:00Z', matterId: API_CONFIG.matterId };
+      });
+      buildCalendarUI(el, true);
+      return;
+    }
+    CalState.appointments = appts;
+    buildCalendarUI(el, false);
+  });
+}
+
+function buildCalendarUI(el, usingMock) {
+  var year  = CalState.year;
+  var month = CalState.month;
+  var now   = new Date();
+  var todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
+
+  var monthName  = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
+  var firstDay   = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Index appointments by local day-of-month for the displayed month
+  var evByDay = {};
+  CalState.appointments.forEach(function(appt) {
+    var d = parseApptDate(appt.startUtc);
+    if (!d) return;
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      var day = d.getDate();
+      if (!evByDay[day]) evByDay[day] = [];
+      evByDay[day].push(appt);
+    }
+  });
+
+  // Build calendar grid cells
+  var cells = '';
+  var total = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  var day = 1;
+  for (var i = 0; i < total; i++) {
+    if (i < firstDay || day > daysInMonth) {
+      cells += '<div class="cal-day other-month"></div>';
+      if (i >= firstDay) day++;
+    } else {
+      var appts = evByDay[day] || [];
+      var apptHtml = '';
+      appts.forEach(function(appt) {
+        var cls = apptBadgeClass(appt.subject);
+        var typeClass = cls === 'badge-danger' ? 'type-hearing' : cls === 'badge-warning' ? 'type-deadline' : '';
+        apptHtml += '<div class="cal-event ' + typeClass + '" data-apptid="' + appt.id + '" style="cursor:pointer">'
+          + (appt.subject || 'Appointment') + '</div>';
+      });
+      var isToday = (year === todayY && month === todayM && day === todayD);
+      cells += '<div class="cal-day' + (isToday ? ' today' : '') + (appts.length ? ' has-event' : '') + '" data-day="' + day + '">'
+        + '<div class="cal-date">' + day + '</div>' + apptHtml + '</div>';
+      day++;
+    }
+  }
+
+  // Build agenda list — all appointments for this month, sorted
+  var monthAppts = [];
+  CalState.appointments.forEach(function(appt) {
+    var d = parseApptDate(appt.startUtc);
+    if (d && d.getFullYear() === year && d.getMonth() === month) {
+      monthAppts.push(appt);
+    }
+  });
+  monthAppts.sort(function(a, b) { return new Date(a.startUtc) - new Date(b.startUtc); });
+
+  // Also collect upcoming appts (next 90 days) for "all upcoming" tab
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() + 90);
+  var upcoming = [];
+  CalState.appointments.forEach(function(appt) {
+    var d = parseApptDate(appt.startUtc);
+    if (d && d >= now && d <= cutoff) upcoming.push(appt);
+  });
+  upcoming.sort(function(a, b) { return new Date(a.startUtc) - new Date(b.startUtc); });
+
+  var agendaRows = '';
+  if (monthAppts.length === 0) {
+    agendaRows = '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--text-muted)">No appointments this month.</td></tr>';
+  } else {
+    monthAppts.forEach(function(appt) {
+      var start = parseApptDate(appt.startUtc);
+      var end   = parseApptDate(appt.endUtc);
+      var cls   = apptBadgeClass(appt.subject);
+      agendaRows += '<tr style="cursor:pointer" onclick="showApptDetail(' + JSON.stringify(appt).split('"').join('&quot;') + ')">'
+        + '<td style="font-weight:500">' + (appt.subject || 'Appointment') + '</td>'
+        + '<td>' + (start ? fmtDateShort(start) : '—') + '</td>'
+        + '<td>' + (start ? fmtTime(start) : '—') + (end ? ' – ' + fmtTime(end) : '') + '</td>'
+        + '<td>' + badge(cls === 'badge-danger' ? 'Hearing/Depo' : cls === 'badge-warning' ? 'Deadline' : 'Appointment', cls) + '</td>'
+        + '</tr>';
+    });
+  }
+
+  var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+  var refreshStamp = '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+    + '<span style="width:8px;height:8px;border-radius:50%;background:' + (usingMock ? 'var(--warning)' : '#10B981') + ';display:inline-block"></span>'
+    + (usingMock ? 'Using sample data &mdash; live connection not yet configured.' : 'Last refreshed at ' + refreshTime)
+    + '</div>';
+
+  var prevYear  = month === 0 ? year - 1 : year;
+  var prevMonth = month === 0 ? 11 : month - 1;
+  var nextYear  = month === 11 ? year + 1 : year;
+  var nextMonth = month === 11 ? 0 : month + 1;
+
+  el.innerHTML = '<div class="page-header">'
+    + '<div class="page-title">Case Calendar</div>'
+    + '<div class="page-subtitle">Scheduled appointments for your case.</div>'
+    + '<div class="page-actions">'
+    + '<button class="btn-sm btn-outline" id="cal-prev">&#8592; ' + new Date(prevYear, prevMonth, 1).toLocaleString('default',{month:'short'}) + '</button>'
+    + '<strong style="font-size:16px;color:var(--navy);min-width:160px;text-align:center">' + monthName + ' ' + year + '</strong>'
+    + '<button class="btn-sm btn-outline" id="cal-next">' + new Date(nextYear, nextMonth, 1).toLocaleString('default',{month:'short'}) + ' &#8594;</button>'
+    + '<button class="btn-sm btn-outline" id="cal-today" style="margin-left:8px">Today</button>'
+    + '<button class="btn-sm btn-gold" style="margin-left:auto" id="cal-request">+ Request Appointment</button>'
+    + '</div></div>'
+    + refreshStamp
+    + '<div class="card" style="margin-bottom:20px"><div class="card-body" style="padding:0">'
+    + '<div class="calendar-grid">'
+    + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){ return '<div class="cal-day-header">'+d+'</div>'; }).join('')
+    + cells
+    + '</div></div></div>'
+    + '<div class="card">'
+    + '<div class="card-header"><span class="card-title">Appointments — ' + monthName + ' ' + year + '</span>'
+    + '<span style="font-size:12px;color:var(--text-muted)">' + monthAppts.length + ' appointment' + (monthAppts.length !== 1 ? 's' : '') + '</span></div>'
+    + '<table class="data-table"><thead><tr><th>Subject</th><th>Date</th><th>Time</th><th>Type</th></tr></thead>'
+    + '<tbody>' + agendaRows + '</tbody></table></div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">'
+    + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
+    + '<span class="integration-badge ' + (usingMock ? '' : 'sf') + '" style="' + (usingMock ? 'color:var(--warning);background:var(--warning-bg)' : '') + '">'
+    + (usingMock ? '&#9888; Sample Data' : '&#10003; Data current as of ' + refreshTime)
+    + '</span></div>';
+
+  // Wire month navigation
+  document.getElementById('cal-prev').addEventListener('click', function() {
+    CalState.year  = prevYear;
+    CalState.month = prevMonth;
+    buildCalendarUI(el, usingMock);
+  });
+  document.getElementById('cal-next').addEventListener('click', function() {
+    CalState.year  = nextYear;
+    CalState.month = nextMonth;
+    buildCalendarUI(el, usingMock);
+  });
+  document.getElementById('cal-today').addEventListener('click', function() {
+    CalState.year  = new Date().getFullYear();
+    CalState.month = new Date().getMonth();
+    buildCalendarUI(el, usingMock);
+  });
+  document.getElementById('cal-request').addEventListener('click', openAddEvent);
+
+  // Wire calendar cell click — show day detail
+  el.querySelectorAll('.cal-day[data-day]').forEach(function(cell) {
+    cell.addEventListener('click', function(e) {
+      if (e.target.classList.contains('cal-event')) return; // handled below
+      var d = parseInt(this.dataset.day, 10);
+      var dayAppts = evByDay[d] || [];
+      if (dayAppts.length) showDayAppts(year, month, d, dayAppts);
+    });
+  });
+
+  // Wire individual event chip clicks
+  el.querySelectorAll('.cal-event[data-apptid]').forEach(function(chip) {
+    chip.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.dataset.apptid, 10);
+      var appt = CalState.appointments.find(function(a){ return a.id === id; });
+      if (appt) showApptDetail(appt);
+    });
+  });
+}
+
+function showDayAppts(year, month, day, appts) {
+  var dateStr = new Date(year, month, day).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  var body = '';
+  appts.forEach(function(appt) {
+    var start = parseApptDate(appt.startUtc);
+    var end   = parseApptDate(appt.endUtc);
+    body += '<div style="padding:12px 0;border-bottom:1px solid var(--border-light)">'
+      + '<div style="font-weight:600;font-size:14px">' + (appt.subject || 'Appointment') + '</div>'
+      + '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">'
+      + (start ? fmtTime(start) : '') + (end ? ' – ' + fmtTime(end) : '') + '</div>'
+      + '</div>';
+  });
+  openModal('Appointments — ' + dateStr, body, '<button class="btn-sm btn-outline" onclick="closeModal()">Close</button>');
+}
+
+function showApptDetail(appt) {
+  var start = parseApptDate(appt.startUtc);
+  var end   = parseApptDate(appt.endUtc);
+  var body  = '<table style="width:100%;font-size:13.5px;border-collapse:collapse">'
+    + '<tr><td style="padding:8px 0;color:var(--text-muted);width:110px;vertical-align:top">Subject</td><td style="padding:8px 0;font-weight:600">' + (appt.subject || '—') + '</td></tr>'
+    + '<tr><td style="padding:8px 0;color:var(--text-muted);vertical-align:top">Date</td><td style="padding:8px 0">' + (start ? fmtDateShort(start) : '—') + '</td></tr>'
+    + '<tr><td style="padding:8px 0;color:var(--text-muted);vertical-align:top">Time</td><td style="padding:8px 0">' + (start ? fmtTime(start) : '—') + (end ? ' – ' + fmtTime(end) : '') + '</td></tr>'
+    + '</table>';
+  openModal('Appointment Details', body, '<button class="btn-sm btn-outline" onclick="closeModal()">Close</button>');
+}
+
+// Open a staff member's Bookings page — called from dashboard Schedule button
+function openBookingsForStaff(staffName) {
+  var url = bookingsUrlForStaff(staffName);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// Called from the calendar "+ Request Appointment" button — shows staff picker if available
+function openAddEvent() {
+  var cached = CaseCache.data;
+
+  // If we have staff loaded, show a picker so the client chooses who to book with
+  if (cached && cached.staff && cached.staff.length) {
+    var staffOptions = '';
+    cached.staff.forEach(function(member) {
+      var initials = member.name ? member.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase() : '?';
+      staffOptions += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light)">'
+        + '<div class="attorney-avatar" style="width:38px;height:38px;font-size:13px;flex-shrink:0">' + initials + '</div>'
+        + '<div style="flex:1"><div style="font-weight:600;font-size:13.5px">' + member.name + '</div>'
+        + '<div style="font-size:12px;color:var(--text-muted)">' + (member.role || 'Staff') + '</div></div>'
+        + '<button class="btn-sm btn-gold" style="font-size:12px;padding:6px 12px" '
+        + 'onclick="closeModal();openBookingsForStaff(\'' + member.name.replace(/'/g, "\\'") + '\')">Book</button>'
+        + '</div>';
+    });
+    openModal('Schedule an Appointment',
+      '<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Choose a team member to open their online scheduling page.</p>'
+      + staffOptions,
+      '<button class="btn-sm btn-outline" onclick="closeModal()">Cancel</button>'
+    );
+  } else {
+    // No staff cached yet — go straight to fallback
+    window.open(API_CONFIG.bookingsFallback, '_blank', 'noopener,noreferrer');
+  }
+}
+
+// ── MESSAGES (removed) ─────────────────────────────────
+function renderMessages(el) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">Messages</div></div>'
+    + '<div class="card"><div class="card-body">'
+    + emptyState('&#128232;', 'Messages removed', 'This section has been disabled.') + '</div></div>';
+}
+
+// ── TASKS ──────────────────────────────────────────────
+function renderTasks(el) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">Case Tasks</div>'
+    + '<div class="page-subtitle">Action items and deadlines for your case.</div>'
+    + '<div class="page-actions" id="tasks-badges"></div></div>'
+    + '<div id="tasks-body"><div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
+    + '<div style="font-size:28px;margin-bottom:12px">&#128203;</div>'
+    + '<div style="font-weight:500">Loading tasks...</div>'
+    + '</div></div></div>';
+
+  fetchTasks(API_CONFIG.matterId, function(err, tasks) {
+    var badgesEl = document.getElementById('tasks-badges');
+    var bodyEl   = document.getElementById('tasks-body');
+    if (!bodyEl) return;
+
+    if (err) {
+      bodyEl.innerHTML = '<div class="card"><div class="card-body">'
+        + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
+        + '&#9888; Tasks could not be loaded. Please try again or contact your attorney\'s office.</div>'
+        + '</div></div>';
+      return;
+    }
+
+    // Group tasks
+    var open       = tasks.filter(function(t){ return taskStatusGroup(t.status) === 'open'; });
+    var inProgress = tasks.filter(function(t){ return taskStatusGroup(t.status) === 'inprogress'; });
+    var complete   = tasks.filter(function(t){ return taskStatusGroup(t.status) === 'complete'; });
+    var actionable = open.concat(inProgress); // tasks the client sees first
+
+    // Sort open/in-progress by due date ascending
+    actionable.sort(function(a, b) {
+      return new Date(a.dueDateUtc || 0) - new Date(b.dueDateUtc || 0);
+    });
+
+    // Separate client-assigned vs staff-assigned within actionable
+    var clientTasks = actionable.filter(function(t){
+      return !t.assignedStaff || t.assignedStaff.toLowerCase() === 'client';
+    });
+    var staffTasks = actionable.filter(function(t){
+      return t.assignedStaff && t.assignedStaff.toLowerCase() !== 'client';
+    });
+
+    var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+
+    if (badgesEl) {
+      badgesEl.innerHTML = badge(clientTasks.length + ' Need Your Action', 'badge-warning') + ' '
+        + badge(staffTasks.length + ' With Legal Team', 'badge-info') + ' '
+        + badge(complete.length + ' Complete', 'badge-success');
+    }
+
+    bodyEl.innerHTML =
+      // Refresh stamp
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+      + 'Last refreshed at ' + refreshTime + '</div>'
+
+      // Client action tasks
+      + '<div style="margin-bottom:18px"><div class="card">'
+      + '<div class="card-header"><span class="card-title">&#9888;&#65039; Needs Your Action</span>'
+      + badge(clientTasks.length + ' items', 'badge-warning') + '</div>'
+      + '<div class="card-body" style="padding:0">'
+      + (clientTasks.length ? buildTaskTable(clientTasks) : '<div style="padding:20px">' + emptyState('&#10003;', 'All caught up!', 'No tasks currently require your action.') + '</div>')
+      + '</div></div></div>'
+
+      // Staff tasks
+      + '<div style="margin-bottom:18px"><div class="card">'
+      + '<div class="card-header"><span class="card-title">&#128100; With Your Legal Team</span>'
+      + badge(staffTasks.length + ' items', 'badge-info') + '</div>'
+      + '<div class="card-body" style="padding:0">'
+      + (staffTasks.length ? buildTaskTable(staffTasks) : '<div style="padding:20px">' + emptyState('&#10003;', 'No team tasks pending', '') + '</div>')
+      + '</div></div></div>'
+
+      // Completed — collapsed by default
+      + '<div class="card">'
+      + '<div class="card-header" id="completed-toggle" style="cursor:pointer;user-select:none">'
+      + '<span class="card-title">&#10003; Completed Tasks</span>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + badge(complete.length + ' tasks', 'badge-success')
+      + '<span id="completed-arrow" style="color:var(--text-muted);font-size:13px">&#9654; Show</span>'
+      + '</div></div>'
+      + '<div id="completed-body" style="display:none;padding:0">'
+      + (complete.length ? buildTaskTable(complete) : '<div style="padding:20px;text-align:center;color:var(--text-muted)">No completed tasks yet.</div>')
+      + '</div></div>';
+
+    // Wire completed toggle
+    document.getElementById('completed-toggle').addEventListener('click', function() {
+      var body  = document.getElementById('completed-body');
+      var arrow = document.getElementById('completed-arrow');
+      var open  = body.style.display !== 'none';
+      body.style.display = open ? 'none' : 'block';
+      arrow.innerHTML    = open ? '&#9654; Show' : '&#9660; Hide';
+    });
+
+    // Wire task row clicks for detail modal
+    bodyEl.querySelectorAll('tr[data-taskid]').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var id   = parseInt(this.dataset.taskid, 10);
+        var task = tasks.find(function(t){ return t.id === id; });
+        if (task) showTaskDetail(task);
+      });
+    });
+  });
+}
+
+function buildTaskTable(tasks) {
+  var rows = '';
+  tasks.forEach(function(t) {
+    var due     = t.dueDateUtc ? new Date(t.dueDateUtc) : null;
+    var overdue = due && due < new Date() && taskStatusGroup(t.status) !== 'complete';
+    var dueStr  = due ? due.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+
+    rows += '<tr data-taskid="' + t.id + '" style="cursor:pointer">'
+      + '<td style="font-weight:500;max-width:240px">' + (t.title || '—') + '</td>'
+      + '<td>' + taskTypeBadge(t.taskType) + '</td>'
+      + '<td>' + taskStatusBadge(t.status) + '</td>'
+      + '<td style="color:' + (overdue ? 'var(--danger)' : 'var(--text-muted)') + ';font-weight:' + (overdue ? '600' : '400') + '">'
+      + (overdue ? '&#9888; ' : '') + dueStr + '</td>'
+      + '<td style="color:var(--text-muted);font-size:12.5px">' + (t.assignedStaff || '—') + '</td>'
+      + '</tr>';
+  });
+  return '<table class="data-table">'
+    + '<thead><tr><th>Task</th><th>Type</th><th>Status</th><th>Due Date</th><th>Assigned To</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody></table>';
+}
+
+function showTaskDetail(task) {
+  var due     = task.dueDateUtc ? new Date(task.dueDateUtc) : null;
+  var overdue = due && due < new Date() && taskStatusGroup(task.status) !== 'complete';
+  var dueStr  = due ? due.toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' }) : '—';
+
+  var body = '<table style="width:100%;font-size:13.5px;border-collapse:collapse">'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);width:120px;vertical-align:top;border-bottom:1px solid var(--border-light)">Task</td>'
+    + '<td style="padding:9px 0;font-weight:600;border-bottom:1px solid var(--border-light)">' + (task.title || '—') + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Type</td>'
+    + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + taskTypeBadge(task.taskType) + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Status</td>'
+    + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + taskStatusBadge(task.status) + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Due Date</td>'
+    + '<td style="padding:9px 0;color:' + (overdue ? 'var(--danger)' : 'inherit') + ';font-weight:' + (overdue ? '600' : '400') + ';border-bottom:1px solid var(--border-light)">'
+    + (overdue ? '&#9888; Overdue — ' : '') + dueStr + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Assigned To</td>'
+    + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + (task.assignedStaff || '—') + '</td></tr>'
+    + (task.notes ? '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top">Notes</td>'
+    + '<td style="padding:9px 0;line-height:1.5">' + task.notes + '</td></tr>' : '')
+    + '</table>';
+
+  openModal('Task Detail', body, '<button class="btn-sm btn-outline" onclick="closeModal()">Close</button>');
+}
+
+// Legal Issues cache
+var IssueCache = { data: null, matterId: null };
+
+function fetchIssues(matterId, callback) {
+  if (IssueCache.data && IssueCache.matterId === matterId) {
+    callback(null, IssueCache.data);
+    return;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.issuesUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var issues = Array.isArray(data) ? data : (data.value || []);
+        IssueCache.data = issues;
+        IssueCache.matterId = matterId;
+        callback(null, issues);
+      } catch(e) {
+        callback('Could not parse issues response.');
+      }
+    } else {
+      callback('Issues API returned status ' + xhr.status);
+    }
+  };
+
+  xhr.onerror = function() {
+    console.warn('[Issues API] Network error — using mock issues data.');
+    var mock = [
+      { id:1, Issue:'Child Custody & Parenting Time',        'Issue Description':'Parties near 70/30 split; mediation scheduled for July 23.',   'Issue Importance':5040, matterId:matterId },
+      { id:2, Issue:'Equitable Division of Marital Home',    'Issue Description':'Third-party appraisal ordered by court. Value TBD.',            'Issue Importance':5040, matterId:matterId },
+      { id:3, Issue:'Alimony / Spousal Support',             'Issue Description':'Counterparty filed opposition. Hearing set for August.',         'Issue Importance':5041, matterId:matterId },
+      { id:4, Issue:'Division of Retirement Accounts',       'Issue Description':'QDRO attorney retained. Awaiting plan administrator response.', 'Issue Importance':5041, matterId:matterId },
+      { id:5, Issue:'Business Valuation',                    'Issue Description':'CPA forensic analysis underway. Report expected in 6 weeks.',    'Issue Importance':5042, matterId:matterId },
+      { id:6, Issue:'Child Support Calculation',             'Issue Description':'CS worksheet pending final income figures from both parties.',    'Issue Importance':5042, matterId:matterId }
+    ];
+    IssueCache.data = mock;
+    IssueCache.matterId = matterId;
+    callback(null, mock);
+  };
+
+  xhr.ontimeout = function() { callback('Issues API request timed out.'); };
+  xhr.send(JSON.stringify({ matterId: matterId }));
+}
+
+// Aderant picklist codes for Issue Importance (Integer2 field)
+var IMPORTANCE_MAP = { 5040: 'High', 5041: 'Medium', 5042: 'Low' };
+
+function importanceBadge(n) {
+  var code = parseInt(n, 10);
+  if (code === 5040) return badge('High',   'badge-danger');
+  if (code === 5041) return badge('Medium', 'badge-warning');
+  if (code === 5042) return badge('Low',    'badge-neutral');
+  return badge('—', 'badge-neutral');
+}
+
+function importanceSort(a, b) {
+  var order = { 5040: 1, 5041: 2, 5042: 3 };
+  var ai = order[parseInt(a['Issue Importance'], 10)] || 99;
+  var bi = order[parseInt(b['Issue Importance'], 10)] || 99;
+  return ai - bi;
+}
+function renderIssues(el) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">Legal Issues</div>'
+    + '<div class="page-subtitle">Active issues being addressed in your case.</div>'
+    + '<div class="page-actions" id="issues-badges"></div></div>'
+    + '<div id="issues-body"><div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
+    + '<div style="font-size:28px;margin-bottom:12px">&#9878;</div>'
+    + '<div style="font-weight:500">Loading legal issues...</div>'
+    + '</div></div></div>';
+
+  fetchIssues(API_CONFIG.matterId, function(err, issues) {
+    var badgesEl = document.getElementById('issues-badges');
+    var bodyEl   = document.getElementById('issues-body');
+    if (!bodyEl) return;
+
+    if (err) {
+      bodyEl.innerHTML = '<div class="card"><div class="card-body">'
+        + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
+        + '&#9888; Legal issues could not be loaded. Please try again or contact your attorney\'s office.</div>'
+        + '</div></div>';
+      return;
+    }
+
+    var sorted = issues.slice().sort(importanceSort);
+    var high   = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5040; });
+    var medium = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5041; });
+    var low    = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5042 || !i['Issue Importance']; });
+
+    var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+
+    if (badgesEl) {
+      badgesEl.innerHTML = badge(high.length   + ' High',   'badge-danger')  + ' '
+        + badge(medium.length + ' Medium', 'badge-warning') + ' '
+        + badge(low.length    + ' Low',    'badge-neutral');
+    }
+
+    var rows = '';
+    sorted.forEach(function(iss, idx) {
+      rows += '<tr style="cursor:pointer" data-issidx="' + idx + '">'
+        + '<td style="font-weight:500">' + (iss['Issue'] || '—') + '</td>'
+        + '<td>' + importanceBadge(iss['Issue Importance']) + '</td>'
+        + '<td style="color:var(--text-muted);font-size:13px;max-width:340px">'
+        + (iss['Issue Description'] ? truncate(iss['Issue Description'], 90) : '—') + '</td>'
+        + '</tr>';
+    });
+
+    bodyEl.innerHTML =
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+      + 'Last refreshed at ' + refreshTime + '</div>'
+      + '<div class="card"><table class="data-table">'
+      + '<thead><tr><th>Issue</th><th>Importance</th><th>Summary</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table></div>'
+      + '<p style="font-size:11.5px;color:var(--text-muted);margin-top:10px">'
+      + 'Click any issue for full details. ' + sorted.length + ' total issue' + (sorted.length !== 1 ? 's' : '') + ' on record.</p>';
+
+    bodyEl.querySelectorAll('tr[data-issidx]').forEach(function(row) {
+      row.addEventListener('click', function() {
+        showIssueDetail(sorted[parseInt(this.dataset.issidx, 10)]);
+      });
+    });
+  });
+}
+
+function showIssueDetail(iss) {
+  var body = '<table style="width:100%;font-size:13.5px;border-collapse:collapse">'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);width:120px;vertical-align:top;border-bottom:1px solid var(--border-light)">Issue</td>'
+    + '<td style="padding:9px 0;font-weight:600;border-bottom:1px solid var(--border-light)">' + (iss['Issue'] || '—') + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Importance</td>'
+    + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + importanceBadge(iss['Issue Importance']) + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top">Description</td>'
+    + '<td style="padding:9px 0;line-height:1.6">' + (iss['Issue Description'] || 'No description provided.') + '</td></tr>'
+    + '</table>';
+  openModal(iss['Issue'] || 'Issue Detail', body, '<button class="btn-sm btn-outline" onclick="closeModal()">Close</button>');
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max).trimEnd() + '\u2026' : str;
+}
+
+// ── MARITAL BALANCE SHEET ──────────────────────────────
+
+// Ownership / Separate Property picklist codes
+var OWNERSHIP_MAP = {
+  5219: 'Client',
+  5220: 'Opposing Party',
+  5221: 'Joint',
+  5222: 'Custodial Act',
+  5223: '3rd Party'
+};
+
+function ownershipLabel(code) {
+  return OWNERSHIP_MAP[parseInt(code, 10)] || (code != null ? String(code) : '—');
+}
+
+function ownershipBadge(code) {
+  var c = parseInt(code, 10);
+  var label = ownershipLabel(c);
+  if (c === 5219) return badge(label, 'badge-info');
+  if (c === 5220) return badge(label, 'badge-warning');
+  if (c === 5221) return badge(label, 'badge-success');
+  return badge(label, 'badge-neutral');
+}
+
+// ── MBS Calculations ───────────────────────────────────
+// Mirrors the Logic App expressions exactly.
+// currency5 = Total Value, currency4 = Debt Amount,
+// currency7 = Separate Property Amount, integer3 = Percent to Client,
+// currency15 = Client Separate Property Allocation (add to Select_MBS if not present)
+
+function mbsCoalesce(v) { return (v == null || v === '' || isNaN(Number(v))) ? 0 : Number(v); }
+function mbsHasValue(v) { return v != null && v !== '' && !isNaN(Number(v)) && Number(v) !== 0; }
+
+function calcMaritalValue(row) {
+  // (Total Value + Debt Amount) - Separate Property Amount
+  return (mbsCoalesce(row['Total Value']) + mbsCoalesce(row['Debt Amount'])) - mbsCoalesce(row['Separate Property Amount']);
+}
+
+function calcClientMaritalValue(row) {
+  // If Amount to Client (currency15) is present and non-zero, use it directly.
+  // Otherwise fall back to Marital Value × (Percent to Client / 100).
+  // The two fields are mutually exclusive — never both on the same item.
+  if (mbsHasValue(row['Amount to Client'])) {
+    return mbsCoalesce(row['Amount to Client']);
+  }
+  var pct = mbsCoalesce(row['Percent to Client']);
+  return calcMaritalValue(row) * (pct / 100);
+}
+
+function calcOPMaritalValue(row) {
+  // Opposing party receives whatever the client does not
+  return calcMaritalValue(row) - calcClientMaritalValue(row);
+}
+
+// ── MBS Cache & Fetch ──────────────────────────────────
+var MBSCache = { data: null, matterId: null };
+
+function fetchMBS(matterId, callback) {
+  if (MBSCache.data && MBSCache.matterId === matterId) {
+    callback(null, MBSCache.data);
+    return;
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.mbsUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var rows = Array.isArray(data) ? data : (data.value || []);
+        MBSCache.data = rows;
+        MBSCache.matterId = matterId;
+        callback(null, rows);
+      } catch(e) { callback('Could not parse MBS response.'); }
+    } else { callback('MBS API returned status ' + xhr.status); }
+  };
+
+  xhr.onerror = function() {
+    console.warn('[MBS API] Network error — using mock MBS data.');
+    var mock = [
+      { id:1, Title:'Marital Residence — 123 Oak St',  'Total Value':485000, 'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':50,  'Amount to Client':null,   'Separate Property Ownership':5221, Ownership:5221, 'Valuation Date':'2024-06-01', matterId:matterId },
+      { id:2, Title:'Chase Joint Checking Account',    'Total Value':14250,  'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':50,  'Amount to Client':null,   'Separate Property Ownership':5221, Ownership:5221, 'Valuation Date':'2024-07-01', matterId:matterId },
+      { id:3, Title:'Wells Fargo Savings (Husband)',   'Total Value':32000,  'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':null,'Amount to Client':8000,   'Separate Property Ownership':5221, Ownership:5220, 'Valuation Date':'2024-07-01', matterId:matterId },
+      { id:4, Title:'401(k) — Husband (Vanguard)',     'Total Value':210000, 'Debt Amount':0,     'Separate Property Amount':15000,  'Percent to Client':null,'Amount to Client':42000,  'Separate Property Ownership':5220, Ownership:5220, 'Valuation Date':'2024-06-30', matterId:matterId },
+      { id:5, Title:'IRA — Wife (Fidelity)',           'Total Value':87500,  'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':50,  'Amount to Client':null,   'Separate Property Ownership':5221, Ownership:5219, 'Valuation Date':'2024-06-30', matterId:matterId },
+      { id:6, Title:'2022 Toyota Camry',               'Total Value':24000,  'Debt Amount':-9400, 'Separate Property Amount':0,      'Percent to Client':null,'Amount to Client':24000,  'Separate Property Ownership':5221, Ownership:5219, 'Valuation Date':'2024-07-01', matterId:matterId },
+      { id:7, Title:'2020 Ford F-150',                 'Total Value':31000,  'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':null,'Amount to Client':0,      'Separate Property Ownership':5221, Ownership:5220, 'Valuation Date':'2024-07-01', matterId:matterId },
+      { id:8, Title:'Mortgage — Marital Residence',    'Total Value':-287000,'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':50,  'Amount to Client':null,   'Separate Property Ownership':5221, Ownership:5221, 'Valuation Date':'2024-07-01', matterId:matterId },
+      { id:9, Title:'Amex Joint Credit Card',          'Total Value':-6200,  'Debt Amount':0,     'Separate Property Amount':0,      'Percent to Client':50,  'Amount to Client':null,   'Separate Property Ownership':5221, Ownership:5221, 'Valuation Date':'2024-07-01', matterId:matterId }
+    ];
+    MBSCache.data = mock;
+    MBSCache.matterId = matterId;
+    callback(null, mock);
+  };
+
+  xhr.ontimeout = function() { callback('MBS API request timed out.'); };
+  xhr.send(JSON.stringify({ matterId: matterId }));
+}
+
+function renderMBS(el) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">Marital Balance Sheet</div>'
+    + '<div class="page-subtitle">Inventory of marital property and calculated distribution values.</div>'
+    + '<div class="page-actions">'
+    + '<button class="btn-sm btn-outline" id="mbs-reset">&#8635; Reset Percentages</button>'
+    + '<button class="btn-sm btn-outline" id="mbs-print">&#128196; Print / Export</button>'
+    + '</div></div>'
+    + '<div id="mbs-body"><div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
+    + '<div style="font-size:28px;margin-bottom:12px">&#9878;</div>'
+    + '<div style="font-weight:500">Loading balance sheet...</div>'
+    + '</div></div></div>';
+
+  fetchMBS(API_CONFIG.matterId, function(err, rows) {
+    var bodyEl = document.getElementById('mbs-body');
+    if (!bodyEl) return;
+
+    if (err) {
+      bodyEl.innerHTML = '<div class="card"><div class="card-body">'
+        + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
+        + '&#9888; Balance sheet could not be loaded. Please try again or contact your attorney\'s office.</div>'
+        + '</div></div>';
+      return;
+    }
+
+    var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+
+    // ── Per-row override store ──────────────────────────
+    // Stores user-adjusted percentages keyed by row index.
+    // Original data is never mutated.
+    var pctOverrides = {};
+
+    function effectivePct(r, idx) {
+      if (idx in pctOverrides) return pctOverrides[idx];
+      return mbsHasValue(r['Amount to Client']) ? null : mbsCoalesce(r['Percent to Client']);
+    }
+
+    function effectiveClientValue(r, idx) {
+      if (idx in pctOverrides) {
+        return calcMaritalValue(r) * (pctOverrides[idx] / 100);
+      }
+      return calcClientMaritalValue(r);
+    }
+
+    function effectiveOPValue(r, idx) {
+      return calcMaritalValue(r) - effectiveClientValue(r, idx);
+    }
+
+    // ── Recompute and refresh all live cells ────────────
+    function recalc() {
+      var totalMarital = 0, totalClient = 0, totalOP = 0;
+      rows.forEach(function(r, idx) {
+        totalMarital += calcMaritalValue(r);
+        totalClient  += effectiveClientValue(r, idx);
+        totalOP      += effectiveOPValue(r, idx);
+      });
+
+      // Tiles
+      document.getElementById('mbs-tile-marital').textContent = fmt$(totalMarital);
+      document.getElementById('mbs-tile-client').textContent  = fmt$(totalClient);
+      document.getElementById('mbs-tile-op').textContent      = fmt$(totalOP);
+
+      // Scenario banner
+      document.getElementById('mbs-scen-marital').textContent = fmt$(totalMarital);
+      document.getElementById('mbs-scen-client').textContent  = fmt$(totalClient);
+      document.getElementById('mbs-scen-op').textContent      = fmt$(totalOP);
+
+      // Footer totals
+      document.getElementById('mbs-foot-marital').textContent = fmt$(totalMarital);
+      document.getElementById('mbs-foot-client').innerHTML    = '<span style="color:var(--success)">' + fmt$(totalClient) + '</span>';
+      document.getElementById('mbs-foot-op').innerHTML        = '<span style="color:var(--warning)">' + fmt$(totalOP) + '</span>';
+      var overallPct = totalMarital !== 0 ? ((totalClient / totalMarital) * 100).toFixed(1) : '—';
+      document.getElementById('mbs-foot-pct').textContent = overallPct !== '—' ? overallPct + '%' : '—';
+
+      // Per-row client and OP cells
+      rows.forEach(function(r, idx) {
+        var cv = effectiveClientValue(r, idx);
+        var ov = effectiveOPValue(r, idx);
+        var clientCell = document.getElementById('mbs-cv-' + idx);
+        var opCell     = document.getElementById('mbs-ov-' + idx);
+        if (clientCell) clientCell.innerHTML = fmtMBS(cv);
+        if (opCell)     opCell.innerHTML     = fmtMBS(ov);
+      });
+
+      // Show/hide scenario banner modified indicator
+      var hasOverride = Object.keys(pctOverrides).length > 0;
+      var banner = document.getElementById('mbs-scenario-banner');
+      if (banner) banner.style.display = hasOverride ? 'flex' : 'none';
+    }
+
+    // ── Build tiles ─────────────────────────────────────
+    var totalMarital = 0, totalClient = 0, totalOP = 0, totalValue = 0, totalDebt = 0;
+    rows.forEach(function(r, idx) {
+      totalMarital += calcMaritalValue(r);
+      totalClient  += effectiveClientValue(r, idx);
+      totalOP      += effectiveOPValue(r, idx);
+      totalValue   += mbsCoalesce(r['Total Value']);
+      totalDebt    += mbsCoalesce(r['Debt Amount']);
+    });
+
+    var tilesHtml =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">'
+      + '<div class="stat-tile"><div class="stat-label">Total Marital Value</div>'
+      + '<div class="stat-value" style="font-size:22px;color:var(--navy)" id="mbs-tile-marital">' + fmt$(totalMarital) + '</div>'
+      + '<div class="stat-note">Combined marital estate</div></div>'
+      + '<div class="stat-tile"><div class="stat-label">Client Share</div>'
+      + '<div class="stat-value" style="font-size:22px;color:var(--success)" id="mbs-tile-client">' + fmt$(totalClient) + '</div>'
+      + '<div class="stat-note">Your calculated portion</div></div>'
+      + '<div class="stat-tile"><div class="stat-label">Opposing Party Share</div>'
+      + '<div class="stat-value" style="font-size:22px;color:var(--warning)" id="mbs-tile-op">' + fmt$(totalOP) + '</div>'
+      + '<div class="stat-note">Opposing party portion</div></div>'
+      + '</div>';
+
+    // ── Scenario banner (hidden until an override exists) ─
+    var scenarioBanner =
+      '<div class="scenario-banner" id="mbs-scenario-banner" style="display:none">'
+      + '<div class="scenario-item">'
+      + '<span class="s-label">&#9998; Scenario Totals</span>'
+      + '<span class="s-note">Based on your adjusted percentages</span>'
+      + '</div>'
+      + '<div class="scenario-item">'
+      + '<span class="s-label">Marital Value</span>'
+      + '<span class="s-val" id="mbs-scen-marital">' + fmt$(totalMarital) + '</span>'
+      + '</div>'
+      + '<div class="scenario-item">'
+      + '<span class="s-label">Client Share</span>'
+      + '<span class="s-val" style="color:var(--success)" id="mbs-scen-client">' + fmt$(totalClient) + '</span>'
+      + '</div>'
+      + '<div class="scenario-item">'
+      + '<span class="s-label">OP Share</span>'
+      + '<span class="s-val" style="color:var(--warning)" id="mbs-scen-op">' + fmt$(totalOP) + '</span>'
+      + '</div>'
+      + '<button class="btn-sm btn-outline" id="mbs-scen-reset" style="margin-left:auto;font-size:12px">&#8635; Reset</button>'
+      + '</div>';
+
+    // ── Build table rows ─────────────────────────────────
+    var tableRows = '';
+    rows.forEach(function(r, idx) {
+      var mv      = calcMaritalValue(r);
+      var cmv     = effectiveClientValue(r, idx);
+      var omv     = effectiveOPValue(r, idx);
+      var pct     = effectivePct(r, idx);
+      var useAmt  = mbsHasValue(r['Amount to Client']); // uses fixed dollar amount, no editable %
+      var valDate = r['Valuation Date']
+        ? new Date(r['Valuation Date']).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+        : '—';
+
+      // Percent to Client cell — editable spinner if percentage-based, locked label if amount-based
+      var pctCell;
+      if (useAmt) {
+        pctCell = '<span style="font-size:12px;color:var(--text-muted);white-space:nowrap">Fixed amt</span>';
+      } else {
+        pctCell = '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">'
+          + '<input type="number" min="0" max="100" step="1" value="' + (pct != null ? pct : '') + '" '
+          + 'class="pct-input" data-idx="' + idx + '" title="Adjust client percentage">'
+          + '<span style="font-size:12px;color:var(--text-muted)">%</span>'
+          + '</div>';
+      }
+
+      tableRows += '<tr data-mbsidx="' + idx + '" style="cursor:pointer">'
+        + '<td style="font-weight:500;max-width:200px">' + (r['Title'] || '—') + '</td>'
+        + '<td>' + ownershipBadge(r['Ownership']) + '</td>'
+        + '<td style="text-align:right">' + fmtMBS(r['Total Value']) + '</td>'
+        + '<td style="text-align:right;color:var(--text-muted)">' + fmtMBS(r['Debt Amount']) + '</td>'
+        + '<td style="text-align:right">' + fmtMBS(mv) + '</td>'
+        + '<td style="text-align:center">' + pctCell + '</td>'
+        + '<td style="text-align:right;color:var(--success);font-weight:500" id="mbs-cv-' + idx + '">' + fmtMBS(cmv) + '</td>'
+        + '<td style="text-align:right;color:var(--warning);font-weight:500" id="mbs-ov-' + idx + '">' + fmtMBS(omv) + '</td>'
+        + '<td style="color:var(--text-muted);font-size:12px;white-space:nowrap">' + valDate + '</td>'
+        + '</tr>';
+    });
+
+    var tableHtml = '<div class="card" style="margin-bottom:18px">'
+      + '<div class="card-header">'
+      + '<span class="card-title">Property Inventory</span>'
+      + '<span style="font-size:12px;color:var(--text-muted)">'
+      + rows.length + ' item' + (rows.length !== 1 ? 's' : '') + ' &nbsp;&mdash;&nbsp; '
+      + '<span style="color:var(--gold-muted)">&#9998; Edit % column to model scenarios</span></span>'
+      + '</div>'
+      + '<div style="overflow-x:auto"><table class="data-table" id="mbs-table">'
+      + '<thead><tr>'
+      + '<th>Description</th>'
+      + '<th>Ownership</th>'
+      + '<th style="text-align:right">Total Value</th>'
+      + '<th style="text-align:right">Debt Amount</th>'
+      + '<th style="text-align:right">Marital Value</th>'
+      + '<th style="text-align:center">% to Client</th>'
+      + '<th style="text-align:right">Client Share</th>'
+      + '<th style="text-align:right">OP Share</th>'
+      + '<th>Valuation Date</th>'
+      + '</tr></thead>'
+      + '<tbody>' + tableRows + '</tbody>'
+      + '<tfoot><tr style="background:var(--parchment);font-weight:700">'
+      + '<td colspan="2" style="padding:12px 14px">Totals</td>'
+      + '<td style="text-align:right;padding:12px 14px">' + fmtMBS(totalValue) + '</td>'
+      + '<td style="text-align:right;padding:12px 14px;color:var(--text-muted)">' + fmtMBS(totalDebt) + '</td>'
+      + '<td style="text-align:right;padding:12px 14px" id="mbs-foot-marital">' + fmt$(totalMarital) + '</td>'
+      + '<td style="text-align:center;padding:12px 14px;color:var(--gold-muted)" id="mbs-foot-pct">'
+      + (totalMarital !== 0 ? ((totalClient / totalMarital) * 100).toFixed(1) + '%' : '—') + '</td>'
+      + '<td style="text-align:right;padding:12px 14px" id="mbs-foot-client"><span style="color:var(--success)">' + fmt$(totalClient) + '</span></td>'
+      + '<td style="text-align:right;padding:12px 14px" id="mbs-foot-op"><span style="color:var(--warning)">' + fmt$(totalOP) + '</span></td>'
+      + '<td></td></tr></tfoot>'
+      + '</table></div></div>';
+
+    bodyEl.innerHTML =
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+      + 'Last refreshed at ' + refreshTime + '</div>'
+      + tilesHtml
+      + scenarioBanner
+      + tableHtml
+      + '<p style="font-size:11.5px;color:var(--text-muted);margin-top:8px">'
+      + '&#9888; All values are preliminary, subject to appraisal, discovery, and judicial determination. '
+      + 'Click any row for full item detail. Adjusted percentages are for scenario planning only and do not affect your case record.</p>';
+
+    // ── Wire percentage inputs ──────────────────────────
+    bodyEl.querySelectorAll('.pct-input').forEach(function(input) {
+      input.addEventListener('input', function() {
+        var idx = parseInt(this.dataset.idx, 10);
+        var val = parseFloat(this.value);
+        var original = mbsCoalesce(rows[idx]['Percent to Client']);
+
+        if (isNaN(val) || val < 0)   val = 0;
+        if (val > 100)                val = 100;
+        this.value = val;
+
+        if (val === original) {
+          delete pctOverrides[idx];
+          this.classList.remove('overridden');
+        } else {
+          pctOverrides[idx] = val;
+          this.classList.add('overridden');
+        }
+        recalc();
+      });
+
+      // Prevent row click when interacting with input
+      input.addEventListener('click', function(e) { e.stopPropagation(); });
+    });
+
+    // ── Wire row clicks for detail modal ────────────────
+    bodyEl.querySelectorAll('tr[data-mbsidx]').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.mbsidx, 10);
+        showMBSDetail(rows[idx], idx in pctOverrides ? pctOverrides[idx] : null);
+      });
+    });
+
+    // ── Reset buttons ───────────────────────────────────
+    function resetAll() {
+      pctOverrides = {};
+      bodyEl.querySelectorAll('.pct-input').forEach(function(input) {
+        var idx = parseInt(input.dataset.idx, 10);
+        input.value = mbsCoalesce(rows[idx]['Percent to Client']);
+        input.classList.remove('overridden');
+      });
+      recalc();
+    }
+
+    document.getElementById('mbs-scen-reset').addEventListener('click', resetAll);
+    document.getElementById('mbs-reset').addEventListener('click', resetAll);
+
+    // ── Print ───────────────────────────────────────────
+    document.getElementById('mbs-print').addEventListener('click', function() {
+      window.print();
+    });
+  });
+}
+
+// Format MBS currency — shows TBD for null/undefined, parentheses for negatives
+function fmtMBS(v) {
+  if (v == null) return '<em style="color:var(--text-muted);font-weight:400">TBD</em>';
+  var n = Number(v);
+  if (isNaN(n)) return '<em style="color:var(--text-muted);font-weight:400">TBD</em>';
+  if (n < 0) return '<span style="color:var(--danger)">(' + fmt$(Math.abs(n)) + ')</span>';
+  return fmt$(n);
+}
+
+function showMBSDetail(r, scenarioPct) {
+  var mv  = calcMaritalValue(r);
+  // If a scenario override is active, use it for display
+  var cmv = (scenarioPct != null) ? mv * (scenarioPct / 100) : calcClientMaritalValue(r);
+  var omv = mv - cmv;
+  var valDate = r['Valuation Date'] ? new Date(r['Valuation Date']).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '—';
+
+  // Show whichever allocation method is active for this row
+  var allocationRow;
+  if (scenarioPct != null) {
+    allocationRow = row('% to Client (Scenario)', scenarioPct + '%', 'color:var(--gold-muted);font-weight:600');
+  } else if (mbsHasValue(r['Amount to Client'])) {
+    allocationRow = row('Amount to Client', fmtMBS(r['Amount to Client']), 'font-style:italic');
+  } else {
+    var pct = mbsCoalesce(r['Percent to Client']);
+    allocationRow = row('Percent to Client', pct ? pct + '%' : '—', 'font-style:italic');
+  }
+
+  function row(label, val, style) {
+    return '<tr><td style="padding:9px 0;color:var(--text-muted);width:200px;vertical-align:top;border-bottom:1px solid var(--border-light)">' + label + '</td>'
+      + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light);' + (style||'') + '">' + val + '</td></tr>';
+  }
+
+  var body = '<table style="width:100%;font-size:13.5px;border-collapse:collapse">'
+    + row('Description',              '<strong>' + (r['Title'] || '—') + '</strong>')
+    + row('Ownership',                ownershipBadge(r['Ownership']))
+    + row('Separate Property Owner',  ownershipBadge(r['Separate Property Ownership']))
+    + row('Valuation Date',           valDate)
+    + '<tr><td colspan="2" style="padding:6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Values</td></tr>'
+    + row('Total Value',              fmtMBS(r['Total Value']))
+    + row('Debt Amount',              fmtMBS(r['Debt Amount']))
+    + row('Separate Property Amount', fmtMBS(r['Separate Property Amount']))
+    + row('Marital Value',            fmtMBS(mv), 'font-weight:600')
+    + '<tr><td colspan="2" style="padding:6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Distribution</td></tr>'
+    + allocationRow
+    + row('Client Share',             fmtMBS(cmv), 'color:var(--success);font-weight:600')
+    + row('Opposing Party Share',     fmtMBS(omv), 'color:var(--warning);font-weight:600')
+    + '</table>';
+
+  openModal(r['Title'] || 'Item Detail', body, '<button class="btn-sm btn-outline" onclick="closeModal()">Close</button>');
+}
+
+// ── SHAREFILE API LAYER ────────────────────────────────
+//
+// OAuth2 Authorization Code flow.
+// Tokens are stored in sessionStorage (cleared when browser tab closes).
+// Refresh tokens are stored in localStorage to survive page reloads.
+
+var SF = {
+  token:        null,
+  tokenExpiry:  null,
+  refreshToken: null,
+
+  baseUrl: function() {
+    return 'https://' + API_CONFIG.shareFile.subdomain + '.sf-api.com/sf/v3';
+  },
+
+  authUrl: function() {
+    return 'https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/oauth/token';
+  },
+
+  authorizeUrl: function() {
+    return 'https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/oauth/authorize'
+      + '?response_type=code'
+      + '&client_id='    + encodeURIComponent(API_CONFIG.shareFile.clientId)
+      + '&redirect_uri=' + encodeURIComponent(API_CONFIG.shareFile.redirectUri);
+  },
+
+  // ── Token storage ───────────────────────────────────
+  saveTokens: function(data) {
+    SF.token       = data.access_token;
+    SF.tokenExpiry = new Date(Date.now() + ((data.expires_in || 28800) - 300) * 1000);
+    if (data.refresh_token) {
+      SF.refreshToken = data.refresh_token;
+      try { localStorage.setItem('sf_refresh_token', data.refresh_token); } catch(e) {}
+    }
+    try { sessionStorage.setItem('sf_access_token',  SF.token); } catch(e) {}
+    try { sessionStorage.setItem('sf_token_expiry',  SF.tokenExpiry.toISOString()); } catch(e) {}
+  },
+
+  loadStoredTokens: function() {
+    try {
+      var t  = sessionStorage.getItem('sf_access_token');
+      var ex = sessionStorage.getItem('sf_token_expiry');
+      var rt = localStorage.getItem('sf_refresh_token');
+      if (t && ex) { SF.token = t; SF.tokenExpiry = new Date(ex); }
+      if (rt) SF.refreshToken = rt;
+    } catch(e) {}
+  },
+
+  clearTokens: function() {
+    SF.token = null; SF.tokenExpiry = null; SF.refreshToken = null;
+    try { sessionStorage.removeItem('sf_access_token'); sessionStorage.removeItem('sf_token_expiry'); } catch(e) {}
+    try { localStorage.removeItem('sf_refresh_token'); } catch(e) {}
+  },
+
+  isAuthenticated: function() {
+    return SF.token && SF.tokenExpiry && new Date() < SF.tokenExpiry;
+  },
+
+  // ── Exchange code or refresh for a token ────────────
+  exchangeCode: function(code, callback) {
+    var cfg = API_CONFIG.shareFile;
+    var body = 'grant_type=authorization_code'
+      + '&code='          + encodeURIComponent(code)
+      + '&client_id='     + encodeURIComponent(cfg.clientId)
+      + '&client_secret=' + encodeURIComponent(cfg.clientSecret)
+      + '&redirect_uri='  + encodeURIComponent(cfg.redirectUri);
+    SF._tokenRequest(body, callback);
+  },
+
+  refreshAccessToken: function(callback) {
+    if (!SF.refreshToken) { callback('No refresh token available.'); return; }
+    var cfg = API_CONFIG.shareFile;
+    var body = 'grant_type=refresh_token'
+      + '&refresh_token=' + encodeURIComponent(SF.refreshToken)
+      + '&client_id='     + encodeURIComponent(cfg.clientId)
+      + '&client_secret=' + encodeURIComponent(cfg.clientSecret);
+    SF._tokenRequest(body, callback);
+  },
+
+  _tokenRequest: function(body, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SF.authUrl(), true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.timeout = 15000;
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var data = JSON.parse(xhr.responseText);
+          SF.saveTokens(data);
+          callback(null, SF.token);
+        } catch(e) { callback('ShareFile: could not parse token response.'); }
+      } else {
+        callback('ShareFile token request failed (' + xhr.status + '). Check client ID, secret, and redirect URI.');
+      }
+    };
+    xhr.onerror   = function() { callback('ShareFile auth: network error. Ensure your domain is in ShareFile Allowed Domains.'); };
+    xhr.ontimeout = function() { callback('ShareFile auth: request timed out.'); };
+    xhr.send(body);
+  },
+
+  // ── Main entry point: get a valid token ────────────
+  getToken: function(callback) {
+    // 1. Already have a live token
+    if (SF.isAuthenticated()) { callback(null, SF.token); return; }
+    // 2. Try to refresh silently
+    if (SF.refreshToken) {
+      SF.refreshAccessToken(function(err, token) {
+        if (!err) { callback(null, token); return; }
+        // Refresh failed — need full re-auth
+        SF.clearTokens();
+        callback('SF_NEEDS_AUTH');
+      });
+      return;
+    }
+    callback('SF_NEEDS_AUTH');
+  },
+
+  // ── Redirect to ShareFile login ────────────────────
+  redirectToAuth: function() {
+    // Store current portal page so we return to it after OAuth
+    try { sessionStorage.setItem('sf_auth_return', window.location.href); } catch(e) {}
+    window.location.href = SF.authorizeUrl();
+  },
+
+  // ── Handle OAuth callback (?code=... in URL) ────────
+  handleCallback: function(callback) {
+    var params = new URLSearchParams(window.location.search);
+    var code   = params.get('code');
+    var error  = params.get('error');
+
+    if (error) {
+      // Clean URL and surface error
+      window.history.replaceState({}, document.title, window.location.pathname);
+      callback('ShareFile denied access: ' + (params.get('error_description') || error));
+      return;
+    }
+
+    if (!code) { callback(null); return; } // no code in URL — normal load
+
+    // Exchange the code for tokens
+    SF.exchangeCode(code, function(err) {
+      // Clean the ?code= from the URL regardless of outcome
+      window.history.replaceState({}, document.title, window.location.pathname);
+      if (err) { callback(err); return; }
+      callback(null, true); // true = just authenticated
+    });
+  },
+
+  // Generic authenticated GET
+  get: function(path, callback) {
+    SF.getToken(function(err, token) {
+      if (err) { callback(err); return; }
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', SF.baseUrl() + path, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 15000;
+      xhr.onload = function() {
+        if (xhr.status === 401) { SF.token = null; SF.get(path, callback); return; }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { callback(null, JSON.parse(xhr.responseText)); }
+          catch(e) { callback('ShareFile: could not parse response for ' + path); }
+        } else { callback('ShareFile GET ' + path + ' returned ' + xhr.status); }
+      };
+      xhr.onerror   = function() { callback('ShareFile: network error on GET ' + path); };
+      xhr.ontimeout = function() { callback('ShareFile: timeout on GET ' + path); };
+      xhr.send();
+    });
+  },
+
+  // Generic authenticated POST (JSON body)
+  post: function(path, data, callback) {
+    SF.getToken(function(err, token) {
+      if (err) { callback(err); return; }
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', SF.baseUrl() + path, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 15000;
+      xhr.onload = function() {
+        if (xhr.status === 401) { SF.token = null; SF.post(path, data, callback); return; }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { callback(null, JSON.parse(xhr.responseText)); }
+          catch(e) { callback(null, {}); }
+        } else { callback('ShareFile POST ' + path + ' returned ' + xhr.status); }
+      };
+      xhr.onerror   = function() { callback('ShareFile: network error on POST ' + path); };
+      xhr.ontimeout = function() { callback('ShareFile: timeout on POST ' + path); };
+      xhr.send(JSON.stringify(data));
+    });
+  },
+
+  // Find or create a folder by name inside a parent folder
+  findOrCreateFolder: function(parentId, folderName, callback) {
+    SF.get('/Items(' + parentId + ')/Children?$filter=Name%20eq%20\'' + encodeURIComponent(folderName) + '\'&$select=Id,Name', function(err, data) {
+      if (err) { callback(err); return; }
+      var existing = data.value && data.value[0];
+      if (existing) { callback(null, existing.Id); return; }
+      SF.post('/Items(' + parentId + ')/Folder', { Name: folderName, Description: '' }, function(err2, folder) {
+        if (err2) { callback(err2); return; }
+        callback(null, folder.Id);
+      });
+    });
+  },
+
+  // Resolve the client's matter root folder.
+  // Priority: 1) homeFolderId set on the account by staff
+  //           2) Authenticated user's ShareFile home folder
+  getMatterFolderId: function(matterId, callback) {
+    var cacheKey = 'matterFolder_' + matterId;
+    if (SF[cacheKey]) { callback(null, SF[cacheKey]); return; }
+
+    // If staff pre-configured a folder ID on this account, use it directly
+    var accountFolderId = currentUser && currentUser.homeFolderId;
+    if (accountFolderId) {
+      SF[cacheKey] = accountFolderId;
+      callback(null, accountFolderId);
+      return;
+    }
+
+    // Fall back to the authenticated user's ShareFile home folder
+    SF.get('/Items/Home', function(err, home) {
+      if (err) { callback(err); return; }
+      SF[cacheKey] = home.Id;
+      callback(null, home.Id);
+    });
+  },
+
+  // List children of a folder, returns array of item objects
+  listFolder: function(folderId, callback) {
+    SF.get('/Items(' + folderId + ')/Children?$select=Id,Name,FileSizeBytes,CreationDate,CreatorFirstName,CreatorLastName,ItemType', function(err, data) {
+      if (err) { callback(err); return; }
+      callback(null, data.value || []);
+    });
+  },
+
+  // Get a short-lived direct download URL for a file
+  getDownloadUrl: function(fileId, callback) {
+    SF.get('/Items(' + fileId + ')/Download?redirect=false', function(err, data) {
+      if (err) { callback(err); return; }
+      callback(null, data.DownloadUrl || data.Uri);
+    });
+  },
+
+  // Upload a file into a specific folder, with progress callback
+  uploadFile: function(folderId, file, onProgress, callback) {
+    // Step 1: request an upload URL from ShareFile
+    SF.post('/Items(' + folderId + ')/Upload2', {
+      Method: 'Standard',
+      Raw: true,
+      FileName: file.name,
+      FileSize: file.size
+    }, function(err, uploadSpec) {
+      if (err) { callback(err); return; }
+      var uploadUrl = uploadSpec.ChunkUri || uploadSpec.UploadServiceUrl;
+      if (!uploadUrl) { callback('ShareFile did not return an upload URL.'); return; }
+
+      // Step 2: PUT the file binary directly to the upload URL
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.timeout = 120000; // 2 min for large files
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.addEventListener('progress', function(e) {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        });
+      }
+
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          callback(null);
+        } else {
+          callback('Upload failed with status ' + xhr.status);
+        }
+      };
+      xhr.onerror   = function() { callback('Upload network error.'); };
+      xhr.ontimeout = function() { callback('Upload timed out — file may be too large.'); };
+
+      var formData = new FormData();
+      formData.append('File1', file, file.name);
+      xhr.send(formData);
+    });
+  }
+};
+
+// ── FILE MANAGER PAGE ──────────────────────────────────
+var FileCache = { folders: {}, files: {}, matterFolderId: null, matterId: null };
+
+// Called once at startup to handle the OAuth redirect callback
+function sfHandleStartup(onDone) {
+  SF.loadStoredTokens();
+
+  // Restore portal login session that was saved before the ShareFile redirect
+  function restoreSession() {
+    if (currentUser) return; // already logged in (normal page load)
+    try {
+      var saved = sessionStorage.getItem('portal_session');
+      if (!saved) return;
+      var account = JSON.parse(saved);
+      // Silently re-boot the portal without clearing the saved session
+      currentUser = account;
+      API_CONFIG.matterId = account.matterId;
+      document.getElementById('user-name').textContent        = account.name;
+      document.getElementById('user-case').textContent        = account.caseNumber;
+      document.getElementById('user-avatar').textContent      = account.initials;
+      document.getElementById('topbar-matter-id').textContent = account.matterId;
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('portal-layout').classList.remove('hidden');
+    } catch(e) {}
+  }
+
+  SF.handleCallback(function(err, justAuthed) {
+    if (err) {
+      // Restore session even on error so the client isn't stranded at login
+      restoreSession();
+      showToast('ShareFile: ' + err, 'error');
+      if (onDone) onDone(false);
+      return;
+    }
+    if (justAuthed) {
+      restoreSession(); // restore BEFORE calling onDone so navigate() works
+    }
+    if (onDone) onDone(justAuthed);
+  });
+}
+
+function renderFiles(el) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">File Manager</div>'
+    + '<div class="page-subtitle">Upload required documents and access your case files securely.</div>'
+    + '<div class="page-actions">'
+    + '<span class="integration-badge sf">&#128193; ShareFile</span>'
+    + '<button class="btn-sm btn-outline" id="sf-refresh">&#8635; Refresh</button>'
+    + '</div></div>'
+    + '<div id="sf-body"><div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
+    + '<div style="font-size:28px;margin-bottom:12px">&#128193;</div>'
+    + '<div style="font-weight:500">Checking ShareFile connection...</div>'
+    + '</div></div></div>';
+
+  document.getElementById('sf-refresh').addEventListener('click', function() {
+    FileCache.matterFolderId = null;
+    FileCache.folders = {};
+    FileCache.files = {};
+    renderFiles(el);
+  });
+
+  // Check token state before attempting any API calls
+  SF.getToken(function(err) {
+    var bodyEl = document.getElementById('sf-body');
+    if (!bodyEl) return;
+
+    if (err === 'SF_NEEDS_AUTH') {
+      // Show a clean connect screen — no credentials needed in code
+      bodyEl.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:48px">'
+        + '<div style="font-size:40px;margin-bottom:16px">&#128193;</div>'
+        + '<div style="font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--navy);margin-bottom:8px">Connect to ShareFile</div>'
+        + '<p style="font-size:13.5px;color:var(--text-muted);max-width:360px;margin:0 auto 24px;line-height:1.6">'
+        + 'Sign in with your ShareFile account to upload documents and access your case files. '
+        + 'You\'ll only need to do this once per session.</p>'
+        + '<button class="btn-primary" id="sf-connect-btn" style="padding:12px 32px;font-size:15px">&#128274; Sign In to ShareFile</button>'
+        + '<p style="font-size:11.5px;color:var(--text-muted);margin-top:16px">'
+        + 'You\'ll be redirected to ShareFile and brought back here automatically.</p>'
+        + '</div></div>';
+
+      document.getElementById('sf-connect-btn').addEventListener('click', function() {
+        SF.redirectToAuth();
+      });
+      return;
+    }
+
+    if (err) {
+      bodyEl.innerHTML = sfErrorHtml(err);
+      return;
+    }
+
+    loadFileManager(el, API_CONFIG.matterId);
+  });
+}
+
+function loadFileManager(el, matterId) {
+  var bodyEl = document.getElementById('sf-body');
+  if (!bodyEl) return;
+
+  SF.getMatterFolderId(matterId, function(err, matterFolderId) {
+    if (!bodyEl) return;
+
+    if (err) {
+      bodyEl.innerHTML = sfErrorHtml(err);
+      return;
+    }
+
+    FileCache.matterFolderId = matterFolderId;
+    var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+
+    // Build the structured upload categories + existing files section
+    var categoriesHtml = '';
+    API_CONFIG.uploadCategories.forEach(function(cat) {
+      categoriesHtml += buildCategoryCard(cat, matterFolderId);
+    });
+
+    bodyEl.innerHTML =
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+      + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime + '</div>'
+
+      // Required documents checklist
+      + '<div class="card" style="margin-bottom:20px">'
+      + '<div class="card-header">'
+      + '<span class="card-title">&#128203; Document Checklist</span>'
+      + '<span style="font-size:12px;color:var(--text-muted)">Upload documents requested by your attorney</span>'
+      + '</div>'
+      + '<div id="sf-categories" style="padding:12px 16px">' + categoriesHtml + '</div>'
+      + '</div>'
+
+      // All files in this matter folder
+      + '<div class="card">'
+      + '<div class="card-header">'
+      + '<span class="card-title">&#128196; All Case Files</span>'
+      + '<span id="sf-file-count" class="badge badge-info">Loading...</span>'
+      + '</div>'
+      + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
+      + '</div>';
+
+    // Wire category upload buttons and toggles
+    API_CONFIG.uploadCategories.forEach(function(cat) {
+      wireCategoryCard(cat, matterFolderId, el, matterId);
+    });
+
+    // Load all files in the matter root
+    loadAllFiles(matterFolderId);
+  });
+}
+
+function buildCategoryCard(cat) {
+  var requiredLabel = cat.required
+    ? '<span style="font-size:10px;background:var(--danger-bg);color:var(--danger);padding:1px 6px;border-radius:10px;font-weight:600;margin-left:6px">Required</span>'
+    : '<span style="font-size:10px;background:var(--parchment-dk);color:var(--text-muted);padding:1px 6px;border-radius:10px;margin-left:6px">Optional</span>';
+
+  return '<div class="sf-category" id="sfcat-' + cat.id + '">'
+    + '<div class="sf-category-header" data-catid="' + cat.id + '">'
+    + '<span style="font-size:18px">' + catIcon(cat.id) + '</span>'
+    + '<span class="sf-category-label">' + cat.label + requiredLabel + '</span>'
+    + '<span class="sf-category-count" id="sfcount-' + cat.id + '">Loading...</span>'
+    + '<span style="color:var(--text-muted);font-size:12px;margin-left:8px">&#9654;</span>'
+    + '</div>'
+    + '<div class="sf-category-body" id="sfbody-' + cat.id + '">'
+    + '<div style="padding:12px 16px;border-top:1px solid var(--border-light)">'
+    + '<input type="file" id="sfinput-' + cat.id + '" accept="' + cat.accept + '" multiple style="display:none">'
+    + '<div id="sfzone-' + cat.id + '" class="upload-zone" style="padding:20px;margin-bottom:10px">'
+    + '<div class="upload-icon" style="font-size:24px">&#128196;</div>'
+    + '<div class="upload-text" style="font-size:13px">Drop files here or <span style="color:var(--gold-muted);font-weight:600;cursor:pointer">browse</span></div>'
+    + '<div class="upload-subtext">Accepted: ' + cat.accept + '</div>'
+    + '</div>'
+    + '<div id="sffiles-' + cat.id + '"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px">Loading files in this category...</div></div>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function wireCategoryCard(cat, matterFolderId, pageEl, matterId) {
+  var header   = document.querySelector('.sf-category-header[data-catid="' + cat.id + '"]');
+  var body     = document.getElementById('sfbody-' + cat.id);
+  var zone     = document.getElementById('sfzone-' + cat.id);
+  var input    = document.getElementById('sfinput-' + cat.id);
+  var arrow    = header ? header.querySelector('span:last-child') : null;
+  if (!header || !body || !zone || !input) return;
+
+  // Load files for this category
+  SF.findOrCreateFolder(matterFolderId, cat.label, function(err, catFolderId) {
+    if (err) {
+      document.getElementById('sfcount-' + cat.id).textContent = 'Error';
+      document.getElementById('sffiles-' + cat.id).innerHTML = '<p style="color:var(--danger);font-size:13px;padding:8px 0">' + err + '</p>';
+      return;
+    }
+    FileCache.folders[cat.id] = catFolderId;
+    refreshCategoryFiles(cat, catFolderId);
+  });
+
+  // Toggle open/close
+  header.addEventListener('click', function() {
+    var isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    if (arrow) arrow.innerHTML = isOpen ? '&#9654;' : '&#9660;';
+  });
+
+  // Drop zone
+  zone.addEventListener('click', function() { input.click(); });
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    uploadToCategory(cat, Array.from(e.dataTransfer.files));
+  });
+  input.addEventListener('change', function() {
+    uploadToCategory(cat, Array.from(this.files));
+    this.value = '';
+  });
+}
+
+function uploadToCategory(cat, files) {
+  var catFolderId = FileCache.folders[cat.id];
+  if (!catFolderId) { showToast('Category folder not ready yet. Please wait a moment.', 'error'); return; }
+  if (!files || !files.length) return;
+
+  files.forEach(function(file) {
+    // Inject a progress row into the category file list
+    var progressId = 'sfprog-' + Date.now();
+    var filesEl = document.getElementById('sffiles-' + cat.id);
+    if (filesEl) {
+      var progRow = document.createElement('div');
+      progRow.id = progressId;
+      progRow.className = 'sf-file-row';
+      progRow.innerHTML = '<span style="font-size:18px">' + fileIcon(file.name) + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + file.name + '</div>'
+        + '<div class="sf-progress"><div class="sf-progress-bar" id="' + progressId + '-bar"></div></div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px" id="' + progressId + '-status">Uploading...</div>'
+        + '</div>';
+      filesEl.insertBefore(progRow, filesEl.firstChild);
+    }
+
+    SF.uploadFile(catFolderId, file,
+      function(pct) {
+        var bar = document.getElementById(progressId + '-bar');
+        var status = document.getElementById(progressId + '-status');
+        if (bar) bar.style.width = pct + '%';
+        if (status) status.textContent = pct + '% uploaded...';
+      },
+      function(err) {
+        var progEl = document.getElementById(progressId);
+        if (err) {
+          showToast('Upload failed: ' + err, 'error');
+          if (progEl) progEl.remove();
+        } else {
+          showToast('"' + file.name + '" uploaded successfully.', 'success');
+          if (progEl) progEl.remove();
+          // Refresh category file list and all-files section
+          refreshCategoryFiles(cat, catFolderId);
+          loadAllFiles(FileCache.matterFolderId);
+        }
+      }
+    );
+  });
+}
+
+function refreshCategoryFiles(cat, catFolderId) {
+  var countEl = document.getElementById('sfcount-' + cat.id);
+  var filesEl = document.getElementById('sffiles-' + cat.id);
+
+  SF.listFolder(catFolderId, function(err, items) {
+    var files = (items || []).filter(function(i) { return i.ItemType === 'File'; });
+
+    if (countEl) {
+      countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
+      countEl.style.color = (cat.required && files.length === 0) ? 'var(--danger)' : 'var(--text-muted)';
+    }
+
+    if (!filesEl) return;
+    if (err) { filesEl.innerHTML = '<p style="color:var(--danger);font-size:13px;padding:8px 0">' + err + '</p>'; return; }
+    if (!files.length) {
+      filesEl.innerHTML = '<div style="padding:10px 0;font-size:13px;color:var(--text-muted)">'
+        + (cat.required ? '&#9888; No files uploaded yet — this document is required.' : 'No files uploaded yet.') + '</div>';
+      return;
+    }
+
+    filesEl.innerHTML = files.map(function(f) {
+      var size = f.FileSizeBytes ? Math.round(f.FileSizeBytes / 1024) + ' KB' : '';
+      var date = f.CreationDate ? new Date(f.CreationDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+      return '<div class="sf-file-row">'
+        + '<span style="font-size:18px">' + fileIcon(f.Name) + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.Name + '</div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted)">' + date + (size ? ' &middot; ' + size : '') + '</div>'
+        + '</div>'
+        + '<button class="btn-sm btn-outline" style="font-size:12px;flex-shrink:0" data-fileid="' + f.Id + '" data-filename="' + f.Name.replace(/"/g,'') + '">&#8595; Download</button>'
+        + '</div>';
+    }).join('');
+
+    // Wire download buttons
+    filesEl.querySelectorAll('button[data-fileid]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = this.dataset.fileid;
+        var name = this.dataset.filename;
+        this.textContent = 'Getting link...';
+        var self = this;
+        SF.getDownloadUrl(id, function(err, url) {
+          if (err) { showToast('Could not get download link: ' + err, 'error'); self.textContent = '↓ Download'; return; }
+          window.open(url, '_blank', 'noopener,noreferrer');
+          self.textContent = '↓ Download';
+        });
+      });
+    });
+  });
+}
+
+function loadAllFiles(matterFolderId) {
+  var countEl = document.getElementById('sf-file-count');
+  var allEl   = document.getElementById('sf-all-files');
+  if (!allEl) return;
+
+  SF.listFolder(matterFolderId, function(err, items) {
+    if (!allEl) return;
+    if (err) { allEl.innerHTML = '<div style="padding:20px;color:var(--danger);font-size:13px">' + err + '</div>'; return; }
+
+    var files = (items || []).filter(function(i) { return i.ItemType === 'File'; });
+    var folders = (items || []).filter(function(i) { return i.ItemType === 'Folder'; });
+
+    if (countEl) countEl.textContent = files.length + ' files, ' + folders.length + ' folders';
+
+    if (!items.length) {
+      allEl.innerHTML = '<div style="padding:28px;text-align:center;color:var(--text-muted)">No files found in this matter folder yet.</div>';
+      return;
+    }
+
+    var rows = '';
+    // Show folders first, then files
+    folders.forEach(function(f) {
+      rows += '<div class="sf-file-row">'
+        + '<span style="font-size:20px">&#128193;</span>'
+        + '<div style="flex:1"><div style="font-size:13px;font-weight:500">' + f.Name + '</div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted)">Folder</div></div>'
+        + '</div>';
+    });
+    files.forEach(function(f) {
+      var size = f.FileSizeBytes ? Math.round(f.FileSizeBytes / 1024) + ' KB' : '';
+      var date = f.CreationDate ? new Date(f.CreationDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+      rows += '<div class="sf-file-row">'
+        + '<span style="font-size:20px">' + fileIcon(f.Name) + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.Name + '</div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted)">' + date + (size ? ' &middot; ' + size : '') + '</div>'
+        + '</div>'
+        + '<button class="btn-sm btn-outline" style="font-size:12px;flex-shrink:0" data-fileid="' + f.Id + '" data-filename="' + f.Name.replace(/"/g,'') + '">&#8595; Download</button>'
+        + '</div>';
+    });
+
+    allEl.innerHTML = rows;
+
+    allEl.querySelectorAll('button[data-fileid]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = this.dataset.fileid;
+        var name = this.dataset.filename;
+        this.textContent = 'Getting link...';
+        var self = this;
+        SF.getDownloadUrl(id, function(err, url) {
+          if (err) { showToast('Could not get download link: ' + err, 'error'); self.textContent = '↓ Download'; return; }
+          window.open(url, '_blank', 'noopener,noreferrer');
+          self.textContent = '↓ Download';
+        });
+      });
+    });
+  });
+}
+
+function sfErrorHtml(err) {
+  return '<div class="card"><div class="card-body">'
+    + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
+    + '&#9888; Could not connect to ShareFile: ' + err + '</div>'
+    + '<p style="font-size:13px;color:var(--text-muted);margin-top:12px">'
+    + 'Check that your <strong>API_CONFIG.shareFile</strong> credentials are set and your portal domain is listed in '
+    + '<strong>ShareFile Admin &rsaquo; Settings &rsaquo; OAuth2 &rsaquo; Allowed Domains</strong>.</p>'
+    + '</div></div>';
+}
+
+function catIcon(catId) {
+  var icons = {
+    'financial-affidavit':   '📋',
+    'bank-statements':       '🏦',
+    'tax-returns':           '🧾',
+    'pay-stubs':             '💵',
+    'retirement-statements': '📈',
+    'property-documents':    '🏠',
+    'business-records':      '💼',
+    'other':                 '📎'
+  };
+  return icons[catId] || '📄';
+}
+
+function handleFiles() {} // replaced by SF upload — kept as no-op to avoid reference errors
+
+// ── SETTINGS ───────────────────────────────────────────
+function renderSettings(el) {
+  var u = currentUser || MockData.user;
+  el.innerHTML = '<div class="page-header"><div class="page-title">Settings</div>'
+    + '<div class="page-subtitle">Manage your account preferences and integrations.</div></div>'
+    + '<div class="grid-2">'
+    + '<div class="card"><div class="card-header"><span class="card-title">Profile</span></div><div class="card-body">'
+    + '<div class="form-group"><label>Full Name</label><input type="text" value="' + u.name + '"></div>'
+    + '<div class="form-group"><label>Email</label><input type="email" value="' + u.email + '"></div>'
+    + '<div class="form-group"><label>Phone</label><input type="tel" placeholder="(000) 000-0000"></div>'
+    + '<button class="btn-sm btn-primary" onclick="showToast(\'Profile saved\',\'success\')">Save Changes</button>'
+    + '</div></div>'
+    + '<div class="card"><div class="card-header"><span class="card-title">Integrations</span></div><div class="card-body">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border-light)">'
+    + '<div><div style="font-weight:600;font-size:14px">Microsoft Azure AD</div><div style="font-size:12px;color:var(--text-muted)">Single Sign-On</div></div>'
+    + badge('Connected', 'badge-success') + '</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">'
+    + '<div><div style="font-weight:600;font-size:14px">Citrix ShareFile</div>'
+    + '<div style="font-size:12px;color:var(--text-muted)">Secure document storage</div></div>'
+    + '<div style="display:flex;align-items:center;gap:8px">'
+    + (SF.isAuthenticated()
+        ? badge('Connected', 'badge-success') + ' <button class="btn-sm btn-outline" style="font-size:12px" id="sf-disconnect">Disconnect</button>'
+        : badge('Not connected', 'badge-warning') + ' <button class="btn-sm btn-gold" style="font-size:12px" id="sf-connect-settings">Connect</button>')
+    + '</div></div>'
+    + '</div></div>'
+    + '<div class="card"><div class="card-header"><span class="card-title">Security</span></div><div class="card-body">'
+    + '<div class="form-group"><label>Current Password</label><input type="password" placeholder="••••••••"></div>'
+    + '<div class="form-group"><label>New Password</label><input type="password" placeholder="••••••••"></div>'
+    + '<div class="form-group"><label>Confirm Password</label><input type="password" placeholder="••••••••"></div>'
+    + '<button class="btn-sm btn-primary" onclick="showToast(\'Password updated\',\'success\')">Update Password</button>'
+    + '</div></div>'
+    + '</div>';
+
+  var sfDisconnect = document.getElementById('sf-disconnect');
+  var sfConnectSet = document.getElementById('sf-connect-settings');
+  if (sfDisconnect) sfDisconnect.addEventListener('click', function() {
+    SF.clearTokens();
+    showToast('Disconnected from ShareFile.', 'success');
+    renderSettings(el);
+  });
+  if (sfConnectSet) sfConnectSet.addEventListener('click', SF.redirectToAuth);
+}
+
+// ── WIRE EVENTS ────────────────────────────────────────
+document.getElementById('login-btn').addEventListener('click', handleLogin);
+document.getElementById('azure-btn').addEventListener('click', function(){ showToast('Azure SSO: configure MSAL credentials to enable',''); });
+document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
+document.getElementById('email').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('password').focus(); });
+document.getElementById('collapse-btn').addEventListener('click', toggleSidebar);
+document.getElementById('mobile-menu-btn').addEventListener('click', toggleSidebar);
+document.getElementById('logout-btn').addEventListener('click', handleLogout);
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.querySelector('.sidebar-nav').addEventListener('click', function(e){
+  var item = e.target.closest('[data-page]');
+  if (item) navigate(item.dataset.page);
+});
+
+// Load external bookings config on startup
+loadBookingsConfig();
+
+// Handle ShareFile OAuth callback if returning from auth redirect.
+// Runs before anything else so the ?code= param is processed immediately.
+sfHandleStartup(function(justAuthed) {
+  if (justAuthed && currentUser) {
+    showToast('Connected to ShareFile successfully.', 'success');
+    navigate('files');
+  }
+});
+
+// ── DEV PANEL ──────────────────────────────────────────
+
+// Toggle collapse
+document.getElementById('dev-panel-toggle').addEventListener('click', function(){
+  var body  = document.getElementById('dev-panel-body');
+  var arrow = document.getElementById('dev-panel-arrow');
+  var open  = body.style.display !== 'none';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.innerHTML = open ? '&#9654;' : '&#9660;';
+});
+
+// Populate test account table
+(function() {
+  var tbody = document.getElementById('test-accounts-body');
+  TEST_ACCOUNTS.forEach(function(acct) {
+    var tr = document.createElement('tr');
+    tr.style.cssText = 'cursor:pointer;border-bottom:1px solid #EAE4D8';
+    tr.innerHTML = '<td style="padding:7px 8px;font-weight:500;color:#1B2A4A">' + acct.name + '</td>'
+      + '<td style="padding:7px 8px;color:#4A5568">' + acct.email + '</td>'
+      + '<td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + acct.matterId + '</span></td>'
+      + '<td style="padding:7px 8px;color:#6B7280;font-size:11.5px">' + acct.caseNumber + '</td>';
+    tr.addEventListener('mouseenter', function(){ this.style.background='#FFF8E8'; });
+    tr.addEventListener('mouseleave', function(){ this.style.background=''; });
+    tr.addEventListener('click', function(){
+      document.getElementById('email').value    = acct.email;
+      document.getElementById('password').value = acct.password;
+      document.getElementById('login-btn').focus();
+      showDevHint('Filled in ' + acct.name + ' (MatterId: ' + acct.matterId + ') — click Sign In');
+    });
+    tbody.appendChild(tr);
+  });
+})();
+
+function showDevHint(msg) {
+  var err = document.getElementById('login-error');
+  err.style.background = '#D8F3DC';
+  err.style.borderColor = '#A7F3D0';
+  err.style.color = '#2D6A4F';
+  err.textContent = msg;
+  err.classList.remove('hidden');
+  setTimeout(function(){ err.classList.add('hidden'); err.style = ''; }, 4000);
+}
+
+// "Go" button for manual MatterId on login screen
+document.getElementById('dev-matter-go').addEventListener('click', function(){
+  var id = parseInt(document.getElementById('dev-matter-id').value, 10);
+  if (!id || isNaN(id)) { showToast('Enter a valid MatterId number.', 'error'); return; }
+  // Log in as Dev Override account with the specified MatterId
+  var devAcct = Object.assign({}, TEST_ACCOUNTS[TEST_ACCOUNTS.length - 1]);
+  devAcct.matterId    = id;
+  devAcct.caseNumber  = 'MatterId: ' + id;
+  devAcct.name        = 'Dev User (' + id + ')';
+  devAcct.initials    = 'DV';
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-layout').classList.remove('hidden');
+  bootPortal(devAcct);
+});
+document.getElementById('dev-matter-id').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') document.getElementById('dev-matter-go').click();
+});
+
+// ── TOP BAR MATTER SWITCHER ────────────────────────────
+document.getElementById('matter-id-badge').addEventListener('click', function(){
+  openModal('Switch MatterId',
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Change the active MatterId to pull different case data without logging out. The appointment cache will be cleared.</p>'
+    + '<div class="form-group"><label>New MatterId</label>'
+    + '<input type="number" id="switch-matter-input" placeholder="e.g. 23456" value="' + (API_CONFIG.matterId || '') + '"></div>'
+    + '<div style="margin-top:4px"><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Or pick a test account:</p>'
+    + TEST_ACCOUNTS.map(function(a){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);cursor:pointer" onclick="document.getElementById(\'switch-matter-input\').value=' + a.matterId + '">'
+          + '<span style="font-size:13px">' + a.name + ' <span style="color:var(--text-muted);font-size:11.5px">(' + a.caseNumber + ')</span></span>'
+          + '<span style="background:var(--navy);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + a.matterId + '</span></div>';
+      }).join('')
+    + '</div>',
+    '<button class="btn-sm btn-outline" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn-sm btn-primary" onclick="'
+      + 'var v=document.getElementById(\'switch-matter-input\').value;'
+      + 'closeModal();'
+      + 'switchMatterId(v);">Apply & Reload</button>'
+  );
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "staff": [
+    {
+      "name": "Randall Kessler",
+      "bookingsUrl": "https://outlook.office365.com/book/YOUR-PAGE/rkessler"
+    },
+    {
+      "name": "Jane Smith",
+      "bookingsUrl": "https://outlook.office365.com/book/YOUR-PAGE/jsmith"
+    }
+  ],
+  "fallbackUrl": "https://outlook.office365.com/book/YOUR-BOOKINGS-PAGE"
+}
