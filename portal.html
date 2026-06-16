@@ -288,12 +288,26 @@ input,select,textarea{font-family:inherit}
               <th style="padding:6px 8px;text-align:left;color:#4A5568;font-weight:600">Case #</th>
             </tr>
           </thead>
-          <tbody id="test-accounts-body"></tbody>
+          <tbody id="test-accounts-body">
+            <!-- Static fallback rows — always visible even if JS hasn't run yet -->
+            <tr style="cursor:pointer;border-bottom:1px solid #EAE4D8" onclick="document.getElementById('email').value='rachel.geller@test.com';document.getElementById('password').value='test';">
+              <td style="padding:7px 8px;font-weight:500;color:#1B2A4A">Rachel Geller</td>
+              <td style="padding:7px 8px;color:#4A5568">rachel.geller@test.com</td>
+              <td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">9827</span></td>
+              <td style="padding:7px 8px;color:#6B7280;font-size:11.5px">Case #11114-2</td>
+            </tr>
+            <tr style="cursor:pointer" onclick="document.getElementById('email').value='dev@test.com';document.getElementById('password').value='test';">
+              <td style="padding:7px 8px;font-weight:500;color:#1B2A4A">Dev Override</td>
+              <td style="padding:7px 8px;color:#4A5568">dev@test.com</td>
+              <td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">99999</span></td>
+              <td style="padding:7px 8px;color:#6B7280;font-size:11.5px">DEV-OVERRIDE</td>
+            </tr>
+          </tbody>
         </table>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid #EAE4D8">
           <label style="font-size:11px;font-weight:600;color:#4A5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Or enter a MatterId directly:</label>
           <div style="display:flex;gap:6px">
-            <input type="number" id="dev-matter-id" placeholder="e.g. 12345" style="flex:1;padding:7px 10px;border:1.5px solid #D9D1C0;border-radius:6px;font-size:13px;font-family:inherit">
+            <input type="number" id="dev-matter-id" placeholder="e.g. 9827" style="flex:1;padding:7px 10px;border:1.5px solid #D9D1C0;border-radius:6px;font-size:13px;font-family:inherit">
             <button id="dev-matter-go" style="background:#1B2A4A;color:#C9A84C;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit">Go</button>
           </div>
         </div>
