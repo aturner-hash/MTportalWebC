@@ -753,7 +753,7 @@ function renderDashboard(el) {
 // Add as many rows as you need. Password is always "test" for all of them.
 // In production, remove this block and replace handleLogin with real auth.
 var TEST_ACCOUNTS = [
-  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: 'fo0c8987-8885-4735-bf57-9e35cee2724d'  /* paste ShareFile folder ID for this client */ },
+  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: 'fo0c8987-8885-4735-bf57-9e35cee2724d' },
   { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matterId:99999, caseNumber:'DEV-OVERRIDE',  homeFolderId: null  }
 ];
 
@@ -2263,7 +2263,7 @@ var SF = {
     var cacheKey = 'matterFolder_' + matterId;
     if (SF[cacheKey]) { callback(null, SF[cacheKey]); return; }
 
-    // If staff pre-configured a folder ID on this account, use it directly
+    // Use the folder ID configured on the account by staff
     var accountFolderId = currentUser && currentUser.homeFolderId;
     if (accountFolderId) {
       SF[cacheKey] = accountFolderId;
@@ -2271,12 +2271,29 @@ var SF = {
       return;
     }
 
-    // Fall back to the authenticated user's ShareFile home folder
-    SF.get('/Items/Home', function(err, home) {
-      if (err) { callback(err); return; }
-      SF[cacheKey] = home.Id;
-      callback(null, home.Id);
-    });
+    // Try to recover homeFolderId from sessionStorage in case currentUser
+    // wasn't fully restored before this call (race condition after OAuth redirect)
+    try {
+      var saved = sessionStorage.getItem('portal_session');
+      if (saved) {
+        var account = JSON.parse(saved);
+        if (account && account.homeFolderId) {
+          // Patch currentUser so subsequent calls don't repeat this
+          if (currentUser) currentUser.homeFolderId = account.homeFolderId;
+          SF[cacheKey] = account.homeFolderId;
+          callback(null, account.homeFolderId);
+          return;
+        }
+      }
+    } catch(e) {}
+
+    // No folder ID available — give a clear actionable message
+    callback(
+      'No ShareFile folder configured for this account. '
+      + 'Add homeFolderId to this client\'s entry in TEST_ACCOUNTS. '
+      + 'Find the folder ID in ShareFile by navigating to the client\'s folder '
+      + 'and copying the ID from the URL (format: fo########-####-####-####-############).'
+    );
   },
 
   // List children of a folder, returns array of item objects
@@ -2442,46 +2459,55 @@ function loadFileManager(el, matterId) {
       return;
     }
 
-    FileCache.matterFolderId = matterFolderId;
-    var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+    // Verify the folder actually exists and is accessible before rendering
+    SF.get('/Items(' + matterFolderId + ')?$select=Id,Name', function(verifyErr, folder) {
+      if (verifyErr) {
+        bodyEl.innerHTML = sfErrorHtml(
+          'Folder "' + matterFolderId + '" could not be accessed: ' + verifyErr
+          + '. Confirm this folder ID exists in ShareFile and the authenticated user has access to it.'
+        );
+        return;
+      }
 
-    // Build the structured upload categories + existing files section
-    var categoriesHtml = '';
-    API_CONFIG.uploadCategories.forEach(function(cat) {
-      categoriesHtml += buildCategoryCard(cat, matterFolderId);
-    });
+      // Folder confirmed — build the UI
+      FileCache.matterFolderId = matterFolderId;
+      var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
 
-    bodyEl.innerHTML =
-      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
-      + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
-      + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime + '</div>'
+      // Build the structured upload categories + existing files section
+      var categoriesHtml = '';
+      API_CONFIG.uploadCategories.forEach(function(cat) {
+        categoriesHtml += buildCategoryCard(cat, matterFolderId);
+      });
 
-      // Required documents checklist
-      + '<div class="card" style="margin-bottom:20px">'
-      + '<div class="card-header">'
-      + '<span class="card-title">&#128203; Document Checklist</span>'
-      + '<span style="font-size:12px;color:var(--text-muted)">Upload documents requested by your attorney</span>'
-      + '</div>'
-      + '<div id="sf-categories" style="padding:12px 16px">' + categoriesHtml + '</div>'
-      + '</div>'
+      bodyEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+        + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+        + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime
+        + ' &mdash; Folder: <strong style="color:var(--navy)">' + (folder.Name || matterFolderId) + '</strong></div>'
+        + '<div class="card" style="margin-bottom:20px">'
+        + '<div class="card-header">'
+        + '<span class="card-title">&#128203; Document Checklist</span>'
+        + '<span style="font-size:12px;color:var(--text-muted)">Upload documents requested by your attorney</span>'
+        + '</div>'
+        + '<div id="sf-categories" style="padding:12px 16px">' + categoriesHtml + '</div>'
+        + '</div>'
+        + '<div class="card">'
+        + '<div class="card-header">'
+        + '<span class="card-title">&#128196; All Case Files</span>'
+        + '<span id="sf-file-count" class="badge badge-info">Loading...</span>'
+        + '</div>'
+        + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
+        + '</div>';
 
-      // All files in this matter folder
-      + '<div class="card">'
-      + '<div class="card-header">'
-      + '<span class="card-title">&#128196; All Case Files</span>'
-      + '<span id="sf-file-count" class="badge badge-info">Loading...</span>'
-      + '</div>'
-      + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
-      + '</div>';
+      // Wire category upload buttons and toggles
+      API_CONFIG.uploadCategories.forEach(function(cat) {
+        wireCategoryCard(cat, matterFolderId, el, matterId);
+      });
 
-    // Wire category upload buttons and toggles
-    API_CONFIG.uploadCategories.forEach(function(cat) {
-      wireCategoryCard(cat, matterFolderId, el, matterId);
-    });
-
-    // Load all files in the matter root
-    loadAllFiles(matterFolderId);
-  });
+      // Load all files in the matter root
+      loadAllFiles(matterFolderId);
+    }); // end verify
+  }); // end getMatterFolderId
 }
 
 function buildCategoryCard(cat) {
