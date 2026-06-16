@@ -2544,6 +2544,7 @@ function loadFileManager(el, matterId) {
 
       // Folder confirmed — build the UI
       FileCache.matterFolderId = matterFolderId;
+      FileCache.rootFolderName = folder.Name || 'Case Files';
       var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
 
       // Build the structured upload categories + existing files section
@@ -2745,34 +2746,97 @@ function refreshCategoryFiles(cat, catFolderId) {
   });
 }
 
+// ── ALL CASE FILES — Folder Browser ────────────────────
+// Maintains a breadcrumb stack so the client can drill into subfolders
+// and navigate back. Root is always the matter home folder.
+var FolderBrowser = {
+  stack: []  // array of { id, name } — stack[0] is always root
+};
+
 function loadAllFiles(matterFolderId) {
+  // Reset to root on initial load
+  var rootName = FileCache.rootFolderName || 'Case Files';
+  FolderBrowser.stack = [{ id: matterFolderId, name: rootName }];
+  renderFolderBrowser();
+}
+
+function renderFolderBrowser() {
   var countEl = document.getElementById('sf-file-count');
   var allEl   = document.getElementById('sf-all-files');
   if (!allEl) return;
 
-  SF.listFolder(matterFolderId, function(err, items) {
+  var current = FolderBrowser.stack[FolderBrowser.stack.length - 1];
+  allEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">&#128193; Loading...</div>';
+
+  SF.listFolder(current.id, function(err, items) {
     if (!allEl) return;
-    if (err) { allEl.innerHTML = '<div style="padding:20px;color:var(--danger);font-size:13px">' + err + '</div>'; return; }
 
-    var files   = (items || []).filter(sfIsFile);
-    var folders = (items || []).filter(sfIsFolder);
-
-    if (countEl) countEl.textContent = files.length + ' files, ' + folders.length + ' folders';
-
-    if (!items.length) {
-      allEl.innerHTML = '<div style="padding:28px;text-align:center;color:var(--text-muted)">No files found in this matter folder yet.</div>';
+    if (err) {
+      allEl.innerHTML = '<div style="padding:16px;color:var(--danger);font-size:13px">' + err + '</div>';
       return;
     }
 
+    var files   = (items || []).filter(sfIsFile);
+    var folders = (items || []).filter(sfIsFolder);
+    var total   = files.length + folders.length;
+
+    if (countEl) {
+      countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '')
+        + ', ' + folders.length + ' folder' + (folders.length !== 1 ? 's' : '');
+    }
+
+    // ── Breadcrumb ──────────────────────────────────
+    var crumbHtml = '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:10px 16px;background:var(--parchment);border-bottom:1px solid var(--border-light);font-size:12.5px">';
+    FolderBrowser.stack.forEach(function(crumb, idx) {
+      var isLast = idx === FolderBrowser.stack.length - 1;
+      if (isLast) {
+        crumbHtml += '<span style="font-weight:600;color:var(--navy)">&#128193; ' + crumb.name + '</span>';
+      } else {
+        crumbHtml += '<span class="sf-breadcrumb-link" data-stackidx="' + idx + '" '
+          + 'style="color:var(--gold-muted);cursor:pointer;font-weight:500">&#128193; ' + crumb.name + '</span>'
+          + '<span style="color:var(--border);margin:0 2px">&#8250;</span>';
+      }
+    });
+    crumbHtml += '</div>';
+
+    // ── Empty state ──────────────────────────────────
+    if (!total) {
+      allEl.innerHTML = crumbHtml
+        + '<div style="padding:28px;text-align:center;color:var(--text-muted)">'
+        + '<div style="font-size:28px;margin-bottom:8px">&#128193;</div>'
+        + '<div style="font-size:13px">This folder is empty.</div>'
+        + '</div>';
+      wireBreadcrumbs(allEl);
+      return;
+    }
+
+    // ── Rows ────────────────────────────────────────
     var rows = '';
-    // Show folders first, then files
+
+    // Back row (if not at root)
+    if (FolderBrowser.stack.length > 1) {
+      rows += '<div class="sf-file-row sf-folder-row" data-folderid="__back__" style="background:var(--parchment-dk)">'
+        + '<span style="font-size:20px">&#8593;</span>'
+        + '<div style="flex:1">'
+        + '<div style="font-size:13px;font-weight:600;color:var(--navy)">.. Back</div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted)">Go up one level</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    // Subfolders — clickable to drill in
     folders.forEach(function(f) {
-      rows += '<div class="sf-file-row">'
+      rows += '<div class="sf-file-row sf-folder-row" data-folderid="' + f.Id + '" data-foldername="' + f.Name.replace(/"/g, '') + '" style="cursor:pointer">'
         + '<span style="font-size:20px">&#128193;</span>'
-        + '<div style="flex:1"><div style="font-size:13px;font-weight:500">' + f.Name + '</div>'
-        + '<div style="font-size:11.5px;color:var(--text-muted)">Folder</div></div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.Name + '</div>'
+        + '<div style="font-size:11.5px;color:var(--text-muted)">Folder &mdash; click to open</div>'
+        + '</div>'
+        + '<span style="color:var(--text-muted);font-size:16px">&#9654;</span>'
         + '</div>';
     });
+
+    // Files — with download button
     files.forEach(function(f) {
       var size = f.FileSizeBytes ? Math.round(f.FileSizeBytes / 1024) + ' KB' : '';
       var date = f.CreationDate ? new Date(f.CreationDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
@@ -2786,20 +2850,47 @@ function loadAllFiles(matterFolderId) {
         + '</div>';
     });
 
-    allEl.innerHTML = rows;
+    allEl.innerHTML = crumbHtml + rows;
 
+    // ── Wire folder clicks ──────────────────────────
+    allEl.querySelectorAll('.sf-folder-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var fid  = this.dataset.folderid;
+        var name = this.dataset.foldername;
+        if (fid === '__back__') {
+          FolderBrowser.stack.pop();
+        } else {
+          FolderBrowser.stack.push({ id: fid, name: name });
+        }
+        renderFolderBrowser();
+      });
+    });
+
+    // ── Wire breadcrumb clicks ──────────────────────
+    wireBreadcrumbs(allEl);
+
+    // ── Wire download buttons ───────────────────────
     allEl.querySelectorAll('button[data-fileid]').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var id = this.dataset.fileid;
-        var name = this.dataset.filename;
+        var id   = this.dataset.fileid;
         this.textContent = 'Getting link...';
         var self = this;
         SF.getDownloadUrl(id, function(err, url) {
-          if (err) { showToast('Could not get download link: ' + err, 'error'); self.textContent = '↓ Download'; return; }
+          if (err) { showToast('Could not get download link: ' + err, 'error'); self.textContent = '&#8595; Download'; return; }
           window.open(url, '_blank', 'noopener,noreferrer');
-          self.textContent = '↓ Download';
+          self.textContent = '&#8595; Download';
         });
       });
+    });
+  });
+}
+
+function wireBreadcrumbs(container) {
+  container.querySelectorAll('.sf-breadcrumb-link').forEach(function(link) {
+    link.addEventListener('click', function() {
+      var idx = parseInt(this.dataset.stackidx, 10);
+      FolderBrowser.stack = FolderBrowser.stack.slice(0, idx + 1);
+      renderFolderBrowser();
     });
   });
 }
@@ -2944,8 +3035,8 @@ document.getElementById('dev-panel-toggle').addEventListener('click', function()
     tr.addEventListener('click', function(){
       document.getElementById('email').value    = acct.email;
       document.getElementById('password').value = acct.password;
-      document.getElementById('login-btn').focus();
-      showDevHint('Filled in ' + acct.name + ' (MatterId: ' + acct.matterId + ') — click Sign In');
+      // Call login directly — don't rely on user clicking Sign In after
+      handleLogin();
     });
     tbody.appendChild(tr);
   });
