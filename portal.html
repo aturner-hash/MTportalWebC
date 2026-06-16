@@ -803,6 +803,11 @@ var API_CONFIG = {
     //
     // This value must match EXACTLY what is registered in your ShareFile OAuth app.
     // file:// URLs will NOT work — ShareFile blocks them. Serve the file over HTTP/HTTPS.
+    // Azure Function proxy URL — all ShareFile API calls route through this.
+    // Paste the Function URL from Azure Portal after deploying sharefile-proxy.
+    // Azure Portal → Function App → Functions → sharefile-proxy → Get Function URL
+    proxyUrl: 'https://mt-sharefile-proxy-eudbfhfydhaad3fr.eastus-01.azurewebsites.net/api/sharefile-proxy',
+
     redirectUri: 'https://aturner-hash.github.io/MTportalWebC/portal.html'   // ← change to match your actual URL
   },
 
@@ -2222,48 +2227,60 @@ var SF = {
     });
   },
 
-  // Generic authenticated GET
-  get: function(path, callback) {
+  // ── Proxy call — all SF API requests go through the Azure Function ──
+  _proxy: function(method, path, body, callback) {
     SF.getToken(function(err, token) {
       if (err) { callback(err); return; }
+
+      var proxyUrl = API_CONFIG.shareFile.proxyUrl;
+      if (!proxyUrl || proxyUrl.indexOf('YOUR-FUNCTION') > -1) {
+        callback('ShareFile proxy URL not configured. Deploy the Azure Function and set API_CONFIG.shareFile.proxyUrl.');
+        return;
+      }
+
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', SF.baseUrl() + path, true);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.open('POST', proxyUrl, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.timeout = 15000;
+      xhr.setRequestHeader('X-SF-Token', token);
+      xhr.timeout = 20000;
+
       xhr.onload = function() {
-        if (xhr.status === 401) { SF.token = null; SF.get(path, callback); return; }
+        if (xhr.status === 401) {
+          // Token expired — clear and retry once
+          SF.token = null;
+          SF._proxy(method, path, body, callback);
+          return;
+        }
         if (xhr.status >= 200 && xhr.status < 300) {
-          try { callback(null, JSON.parse(xhr.responseText)); }
-          catch(e) { callback('ShareFile: could not parse response for ' + path); }
-        } else { callback('ShareFile GET ' + path + ' returned ' + xhr.status); }
+          try {
+            var data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+            callback(null, data);
+          } catch(e) { callback('Could not parse ShareFile response for ' + path); }
+        } else {
+          try {
+            var errData = JSON.parse(xhr.responseText);
+            callback('ShareFile ' + method + ' ' + path + ' returned ' + xhr.status
+              + (errData.error ? ': ' + errData.error : ''));
+          } catch(e) {
+            callback('ShareFile ' + method + ' ' + path + ' returned ' + xhr.status);
+          }
+        }
       };
-      xhr.onerror   = function() { callback('ShareFile: network error on GET ' + path); };
-      xhr.ontimeout = function() { callback('ShareFile: timeout on GET ' + path); };
-      xhr.send();
+      xhr.onerror   = function() { callback('Proxy network error on ' + method + ' ' + path + '. Check Azure Function is running and CORS is configured.'); };
+      xhr.ontimeout = function() { callback('Proxy timeout on ' + method + ' ' + path); };
+
+      xhr.send(JSON.stringify({ method: method, path: path, body: body || null }));
     });
   },
 
-  // Generic authenticated POST (JSON body)
+  // Generic authenticated GET (via proxy)
+  get: function(path, callback) {
+    SF._proxy('GET', path, null, callback);
+  },
+
+  // Generic authenticated POST (via proxy)
   post: function(path, data, callback) {
-    SF.getToken(function(err, token) {
-      if (err) { callback(err); return; }
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', SF.baseUrl() + path, true);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.timeout = 15000;
-      xhr.onload = function() {
-        if (xhr.status === 401) { SF.token = null; SF.post(path, data, callback); return; }
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try { callback(null, JSON.parse(xhr.responseText)); }
-          catch(e) { callback(null, {}); }
-        } else { callback('ShareFile POST ' + path + ' returned ' + xhr.status); }
-      };
-      xhr.onerror   = function() { callback('ShareFile: network error on POST ' + path); };
-      xhr.ontimeout = function() { callback('ShareFile: timeout on POST ' + path); };
-      xhr.send(JSON.stringify(data));
-    });
+    SF._proxy('POST', path, data, callback);
   },
 
   // Find or create a folder by name inside a parent folder
@@ -2335,12 +2352,13 @@ var SF = {
     });
   },
 
-  // Upload a file into a specific folder, with progress callback
+  // Upload a file — Step 1 goes via proxy (get upload URL), Step 2 is direct PUT to ShareFile's CDN
+  // The CDN PUT endpoint has its own CORS headers and does not need proxying.
   uploadFile: function(folderId, file, onProgress, callback) {
-    // Step 1: request an upload URL from ShareFile
-    SF.post('/Items(' + folderId + ')/Upload2', {
-      Method: 'Standard',
-      Raw: true,
+    // Step 1: request an upload URL via proxy
+    SF._proxy('POST', '/Items(' + folderId + ')/Upload2', {
+      Method:   'Standard',
+      Raw:      true,
       FileName: file.name,
       FileSize: file.size
     }, function(err, uploadSpec) {
@@ -2348,11 +2366,10 @@ var SF = {
       var uploadUrl = uploadSpec.ChunkUri || uploadSpec.UploadServiceUrl;
       if (!uploadUrl) { callback('ShareFile did not return an upload URL.'); return; }
 
-      // Step 2: PUT the file binary directly to the upload URL
+      // Step 2: PUT file directly to ShareFile's upload CDN (this endpoint allows CORS)
       var xhr = new XMLHttpRequest();
       xhr.open('POST', uploadUrl, true);
-      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-      xhr.timeout = 120000; // 2 min for large files
+      xhr.timeout = 120000;
 
       if (xhr.upload && onProgress) {
         xhr.upload.addEventListener('progress', function(e) {
@@ -2361,14 +2378,11 @@ var SF = {
       }
 
       xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          callback(null);
-        } else {
-          callback('Upload failed with status ' + xhr.status);
-        }
+        if (xhr.status >= 200 && xhr.status < 300) { callback(null); }
+        else { callback('Upload failed with status ' + xhr.status); }
       };
       xhr.onerror   = function() { callback('Upload network error.'); };
-      xhr.ontimeout = function() { callback('Upload timed out — file may be too large.'); };
+      xhr.ontimeout = function() { callback('Upload timed out.'); };
 
       var formData = new FormData();
       formData.append('File1', file, file.name);
