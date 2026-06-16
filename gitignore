@@ -1,0 +1,7 @@
+# Sensitive config — contains API keys, never commit
+config.js
+
+# Local dev artifacts
+.DS_Store
+Thumbs.db
+*.log
