@@ -790,7 +790,7 @@ var API_CONFIG = {
   //   a) Set homeFolderId per client in TEST_ACCOUNTS (fastest — staff pastes the ID from ShareFile URL)
   //   b) Leave null and the portal uses the authenticated user's ShareFile home folder automatically
   shareFile: {
-    subdomain:    'mtlawoffice',          // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
+    subdomain:    'mtlawoffice',             // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
     clientId:     'rwlRlhwR3kOVWJ8sfXY6BUVGBL28zzh7',       // from your ShareFile OAuth app registration
     clientSecret: 'FKVDoCT5JnQPryrc9KIfebheodhgvL19aAFBk6Y4doXIqRo5',   // from your ShareFile OAuth app registration
     // redirectUri MUST be the URL where your portal is served — not a ShareFile URL.
@@ -2062,8 +2062,12 @@ var SF = {
   tokenExpiry:  null,
   refreshToken: null,
 
+  apiBase: null, // set from token response — authoritative API URL for this account
+
   baseUrl: function() {
-    return 'https://' + API_CONFIG.shareFile.subdomain + '.sf-api.com/sf/v3';
+    // Prefer the API base URL returned in the token response — it's authoritative.
+    // Fall back to the configured subdomain if token hasn't been exchanged yet.
+    return SF.apiBase || ('https://' + API_CONFIG.shareFile.subdomain + '.sf-api.com/sf/v3');
   },
 
   authUrl: function() {
@@ -2085,17 +2089,36 @@ var SF = {
       SF.refreshToken = data.refresh_token;
       try { localStorage.setItem('sf_refresh_token', data.refresh_token); } catch(e) {}
     }
-    try { sessionStorage.setItem('sf_access_token',  SF.token); } catch(e) {}
-    try { sessionStorage.setItem('sf_token_expiry',  SF.tokenExpiry.toISOString()); } catch(e) {}
+
+    // ShareFile returns the correct API endpoint in the token response.
+    // This is the authoritative URL — do not assume subdomain.sf-api.com.
+    // Response fields: subdomain, apicp (API control plane hostname)
+    if (data.subdomain && data.apicp) {
+      SF.apiBase = 'https://' + data.subdomain + '.' + data.apicp + '/sf/v3';
+      try { sessionStorage.setItem('sf_api_base', SF.apiBase); } catch(e) {}
+      console.log('[ShareFile] API base from token:', SF.apiBase);
+    } else if (data.subdomain) {
+      SF.apiBase = 'https://' + data.subdomain + '.sf-api.com/sf/v3';
+      try { sessionStorage.setItem('sf_api_base', SF.apiBase); } catch(e) {}
+      console.log('[ShareFile] API base (subdomain only):', SF.apiBase);
+    }
+
+    try { sessionStorage.setItem('sf_access_token', SF.token); } catch(e) {}
+    try { sessionStorage.setItem('sf_token_expiry', SF.tokenExpiry.toISOString()); } catch(e) {}
+
+    // Log full token response fields (excluding sensitive values) for debugging
+    console.log('[ShareFile] Token response fields:', Object.keys(data).join(', '));
   },
 
   loadStoredTokens: function() {
     try {
-      var t  = sessionStorage.getItem('sf_access_token');
-      var ex = sessionStorage.getItem('sf_token_expiry');
-      var rt = localStorage.getItem('sf_refresh_token');
-      if (t && ex) { SF.token = t; SF.tokenExpiry = new Date(ex); }
-      if (rt) SF.refreshToken = rt;
+      var t   = sessionStorage.getItem('sf_access_token');
+      var ex  = sessionStorage.getItem('sf_token_expiry');
+      var rt  = localStorage.getItem('sf_refresh_token');
+      var api = sessionStorage.getItem('sf_api_base');
+      if (t && ex)  { SF.token = t; SF.tokenExpiry = new Date(ex); }
+      if (rt)         SF.refreshToken = rt;
+      if (api)        SF.apiBase = api;
     } catch(e) {}
   },
 
@@ -2732,13 +2755,21 @@ function loadAllFiles(matterFolderId) {
 }
 
 function sfErrorHtml(err) {
+  var apiUrl = SF.apiBase || ('https://' + API_CONFIG.shareFile.subdomain + '.sf-api.com/sf/v3');
   return '<div class="card"><div class="card-body">'
-    + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">'
-    + '&#9888; Could not connect to ShareFile: ' + err + '</div>'
-    + '<p style="font-size:13px;color:var(--text-muted);margin-top:12px">'
-    + 'Check that your <strong>API_CONFIG.shareFile</strong> credentials are set and your portal domain is listed in '
-    + '<strong>ShareFile Admin &rsaquo; Settings &rsaquo; OAuth2 &rsaquo; Allowed Domains</strong>.</p>'
-    + '</div></div>';
+    + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">&#9888; ' + err + '</div>'
+    + '<div style="margin-top:16px;padding:12px 16px;background:var(--parchment);border-radius:var(--radius);font-size:12.5px">'
+    + '<div style="font-weight:600;margin-bottom:8px;color:var(--navy)">Diagnostic Info</div>'
+    + '<div style="color:var(--text-muted);line-height:2">'
+    + '<div>API Base: <code style="background:#fff;padding:1px 6px;border-radius:3px">' + apiUrl + '</code></div>'
+    + '<div>Authenticated: <strong>' + (SF.isAuthenticated() ? 'Yes' : 'No') + '</strong></div>'
+    + '<div>Open <strong>F12 &rsaquo; Console</strong> to see the full token response and the exact blocked request.</div>'
+    + '<div>If you see a CORS error: go to <strong>ShareFile Admin &rsaquo; Settings &rsaquo; OAuth2 &rsaquo; Allowed Domains</strong> '
+    + 'and add <strong>https://aturner-hash.github.io</strong></div>'
+    + '</div></div>'
+    + '<div style="margin-top:12px">'
+    + '<button class="btn-sm btn-outline" onclick="SF.clearTokens();navigate(\'files\')">&#8635; Reconnect ShareFile</button>'
+    + '</div></div></div>';
 }
 
 function catIcon(catId) {
