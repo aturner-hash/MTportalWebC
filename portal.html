@@ -793,7 +793,17 @@ var API_CONFIG = {
     subdomain:    'mtlawoffice',          // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
     clientId:     'rwlRlhwR3kOVWJ8sfXY6BUVGBL28zzh7',       // from your ShareFile OAuth app registration
     clientSecret: 'FKVDoCT5JnQPryrc9KIfebheodhgvL19aAFBk6Y4doXIqRo5',   // from your ShareFile OAuth app registration
-    redirectUri:  'https://aturner-hash.github.io/MTportalWebC/portal.html'  // auto-detects current page URL, or paste exact URI here
+    // redirectUri MUST be the URL where your portal is served — not a ShareFile URL.
+    // ShareFile sends the client back here with ?code=... after they log in.
+    //
+    // Examples:
+    //   Local dev (Python):   'http://localhost:8080/portal.html'
+    //   VS Code Live Server:  'http://127.0.0.1:5500/portal.html'
+    //   Production:           'https://portal.yourfirm.com/portal.html'
+    //
+    // This value must match EXACTLY what is registered in your ShareFile OAuth app.
+    // file:// URLs will NOT work — ShareFile blocks them. Serve the file over HTTP/HTTPS.
+    redirectUri: 'https://aturner-hash.github.io/MTportalWebC/portal.html'   // ← change to match your actual URL
   },
 
   // Required document categories — each becomes a subfolder in the client's ShareFile home folder.
