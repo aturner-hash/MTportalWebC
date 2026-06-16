@@ -2254,16 +2254,22 @@ var SF = {
         }
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
+            console.log('[SF Proxy] Status:', xhr.status, 'Path:', path);
+            console.log('[SF Proxy] Raw response:', xhr.responseText.substring(0, 500));
             var data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
             callback(null, data);
-          } catch(e) { callback('Could not parse ShareFile response for ' + path); }
+          } catch(e) {
+            console.error('[SF Proxy] Parse error. Raw response was:', xhr.responseText.substring(0, 1000));
+            callback('Could not parse ShareFile response for ' + path + '. See console for raw response.');
+          }
         } else {
+          console.error('[SF Proxy] Error status:', xhr.status, 'Path:', path, 'Response:', xhr.responseText.substring(0, 500));
           try {
             var errData = JSON.parse(xhr.responseText);
             callback('ShareFile ' + method + ' ' + path + ' returned ' + xhr.status
               + (errData.error ? ': ' + errData.error : ''));
           } catch(e) {
-            callback('ShareFile ' + method + ' ' + path + ' returned ' + xhr.status);
+            callback('ShareFile ' + method + ' ' + path + ' returned ' + xhr.status + '. Raw: ' + xhr.responseText.substring(0, 200));
           }
         }
       };
