@@ -807,8 +807,8 @@ var API_CONFIG = {
   //   b) Leave null and the portal uses the authenticated user's ShareFile home folder automatically
   shareFile: {
     subdomain:    'mtlawoffice',             // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
-    clientId:     'rwlRlhwR3kOVWJ8sfXY6BUVGBL28zzh7',       // from your ShareFile OAuth app registration
-    clientSecret: 'FKVDoCT5JnQPryrc9KIfebheodhgvL19aAFBk6Y4doXIqRo5',   // from your ShareFile OAuth app registration
+    clientId:     'PQtPcg3Y5lPYzAOtUp64e5h5dp3UEAu0',       // from your ShareFile OAuth app registration
+    clientSecret: '4NsCF8ThWEE2L4up0mhpzN8NKevoxrA8pT4nOoXgxhvIHKKM',   // from your ShareFile OAuth app registration
     // redirectUri MUST be the URL where your portal is served — not a ShareFile URL.
     // ShareFile sends the client back here with ?code=... after they log in.
     //
@@ -2701,6 +2701,8 @@ function refreshCategoryFiles(cat, catFolderId) {
 
   SF.listFolder(catFolderId, function(err, items) {
     var files = (items || []).filter(sfIsFile);
+
+    if (countEl) {
       countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
       countEl.style.color = (cat.required && files.length === 0) ? 'var(--danger)' : 'var(--text-muted)';
     }
@@ -2803,8 +2805,6 @@ function loadAllFiles(matterFolderId) {
 }
 
 function sfIsFile(item) {
-  // ShareFile ItemType is not always returned. Fall back to ID prefix:
-  // 'fi' prefix = File, 'fo' prefix = Folder
   if (item.ItemType) return item.ItemType === 'File';
   return item.Id && item.Id.indexOf('fi') === 0;
 }
@@ -2813,6 +2813,8 @@ function sfIsFolder(item) {
   if (item.ItemType) return item.ItemType === 'Folder';
   return item.Id && item.Id.indexOf('fo') === 0;
 }
+
+function sfErrorHtml(err) {
   var apiUrl = SF.apiBase || ('https://' + API_CONFIG.shareFile.subdomain + '.sf-api.com/sf/v3');
   return '<div class="card"><div class="card-body">'
     + '<div class="alert-banner" style="background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)">&#9888; ' + err + '</div>'
