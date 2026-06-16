@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meriwether &amp; Tharp | Client Portal</title>
+<!-- config.js is excluded from Git via .gitignore — contains API keys -->
+<script src="config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -791,8 +793,8 @@ var API_CONFIG = {
   //   b) Leave null and the portal uses the authenticated user's ShareFile home folder automatically
   shareFile: {
     subdomain:    'mtlawoffice',             // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
-    clientId:     'rwlRlhwR3kOVWJ8sfXY6BUVGBL28zzh7',       // from your ShareFile OAuth app registration
-    clientSecret: 'FKVDoCT5JnQPryrc9KIfebheodhgvL19aAFBk6Y4doXIqRo5',   // from your ShareFile OAuth app registration
+    clientId:     'YOUR-SF-CLIENT-ID',       // from your ShareFile OAuth app registration
+    clientSecret: 'YOUR-SF-CLIENT-SECRET',   // from your ShareFile OAuth app registration
     // redirectUri MUST be the URL where your portal is served — not a ShareFile URL.
     // ShareFile sends the client back here with ?code=... after they log in.
     //
@@ -803,10 +805,9 @@ var API_CONFIG = {
     //
     // This value must match EXACTLY what is registered in your ShareFile OAuth app.
     // file:// URLs will NOT work — ShareFile blocks them. Serve the file over HTTP/HTTPS.
-    // Azure Function proxy URL — all ShareFile API calls route through this.
-    // Paste the Function URL from Azure Portal after deploying sharefile-proxy.
-    // Azure Portal → Function App → Functions → sharefile-proxy → Get Function URL
-    proxyUrl: 'https://mt-sharefile-proxy-eudbfhfydhaad3fr.eastus-01.azurewebsites.net/api/sharefile-proxy?code=SG-dB-HI7jhcJM2xGum9_MvJrBcY84-JcDYdXib7wXwWAzFux4SxWw==',
+    // Proxy URL loaded from config.js (not committed to Git — see README).
+    // config.js sets window.MT_CONFIG.sfProxyUrl before this script runs.
+    proxyUrl: (window.MT_CONFIG && window.MT_CONFIG.sfProxyUrl) || '',
 
     redirectUri: 'https://aturner-hash.github.io/MTportalWebC/portal.html'   // ← change to match your actual URL
   },
