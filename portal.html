@@ -776,19 +776,19 @@ var TEST_ACCOUNTS = [
 // ── API CONFIGURATION ──────────────────────────────────
 var API_CONFIG = {
   // Logic App: Appointments
-  appointmentsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-APPT-SIG',
+  appointmentsUrl: 'https://prod-18.northcentralus.logic.azure.com:443/workflows/a9237874b54145aa9f0be2480d532edc/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=jgryGO2-eAqX-CY9-wHrGZftdTcB71hIIrUWlI5_jpk',
 
   // Logic App: Case / Staff
-  caseUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-CASE-SIG',
+  caseUrl: 'https://prod-27.northcentralus.logic.azure.com:443/workflows/3ad1f9f76fb646c28da08e833d4a2d24/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=hAqGyzcdJ-w_yHcpYXyezLgJ0Xu5ylGFszd9hlryWps',
 
   // Logic App: Case Tasks
-  tasksUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-TASKS-SIG',
+  tasksUrl: 'https://prod-03.northcentralus.logic.azure.com:443/workflows/a822cb93b49b48669203067a8bfda3a8/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=mYFd3qwxZqyoYzXC6wESxBQ4-VKwR25TNzSVlrkFPPY',
 
   // Logic App: Legal Issues
-  issuesUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-ISSUES-SIG',
+  issuesUrl: 'https://prod-17.northcentralus.logic.azure.com:443/workflows/c2eab391c9b64cdaa6817c8604afd4d4/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=aus9CpC7tbuVwxHTaKXSAcS9cP6aowkNA5t2xwg9ez4',
 
   // Logic App: Marital Balance Sheet
-  mbsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
+  mbsUrl: 'https://prod-01.northcentralus.logic.azure.com:443/workflows/a22158cc747041fcb94fbb42c08c64de/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=OEjDd8a8FTWb5sFmIBycl_1LH_iisR3Qk3QESsbnUwA',
 
   // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
   //
@@ -2558,6 +2558,46 @@ function loadFileManager(el, matterId) {
         + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
         + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime
         + ' &mdash; Folder: <strong style="color:var(--navy)">' + (folder.Name || matterFolderId) + '</strong></div>'
+
+        // ── Document Progress Card ──────────────────
+        + '<div class="card" style="margin-bottom:20px">'
+        + '<div class="card-header">'
+        + '<span class="card-title">&#127775; Document Progress</span>'
+        + '<span id="sf-prog-label" style="font-size:12px;color:var(--text-muted)">Checking folders...</span>'
+        + '</div>'
+        + '<div style="padding:16px 20px">'
+        // Overall bar
+        + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+        + '<div style="flex:1;height:12px;background:var(--border-light);border-radius:6px;overflow:hidden">'
+        + '<div id="sf-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:6px;transition:width .4s ease"></div>'
+        + '</div>'
+        + '<span id="sf-prog-pct" style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--navy);min-width:44px;text-align:right">0%</span>'
+        + '</div>'
+        // Required vs optional summary
+        + '<div style="display:flex;gap:16px;flex-wrap:wrap">'
+        + '<div style="display:flex;align-items:center;gap:6px;font-size:12.5px">'
+        + '<span id="sf-prog-req-icon" style="font-size:15px">&#9900;</span>'
+        + '<span id="sf-prog-req-text" style="color:var(--text-muted)">Required: checking...</span>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:6px;font-size:12.5px">'
+        + '<span style="font-size:15px;color:var(--text-muted)">&#9900;</span>'
+        + '<span id="sf-prog-opt-text" style="color:var(--text-muted)">Optional: checking...</span>'
+        + '</div>'
+        + '</div>'
+        // Per-category mini indicators
+        + '<div id="sf-prog-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">'
+        + API_CONFIG.uploadCategories.map(function(cat) {
+            return '<div id="sf-prog-cat-' + cat.id + '" title="' + cat.label + '" '
+              + 'style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;'
+              + 'border:1px solid var(--border);background:var(--parchment);font-size:11.5px;color:var(--text-muted)">'
+              + '<span id="sf-prog-dot-' + cat.id + '" style="width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;display:inline-block"></span>'
+              + '<span style="white-space:nowrap">' + cat.label + '</span>'
+              + '</div>';
+          }).join('')
+        + '</div>'
+        + '</div></div>'
+
+        // ── Document Checklist ──────────────────────
         + '<div class="card" style="margin-bottom:20px">'
         + '<div class="card-header">'
         + '<span class="card-title">&#128203; Document Checklist</span>'
@@ -2565,6 +2605,7 @@ function loadFileManager(el, matterId) {
         + '</div>'
         + '<div id="sf-categories" style="padding:12px 16px">' + categoriesHtml + '</div>'
         + '</div>'
+
         + '<div class="card">'
         + '<div class="card-header">'
         + '<span class="card-title">&#128196; All Case Files</span>'
@@ -2572,6 +2613,80 @@ function loadFileManager(el, matterId) {
         + '</div>'
         + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
         + '</div>';
+
+      // ── Progress tracker (shared state across async category loads) ──
+      var total    = API_CONFIG.uploadCategories.length;
+      var required = API_CONFIG.uploadCategories.filter(function(c){ return c.required; });
+      var optional = API_CONFIG.uploadCategories.filter(function(c){ return !c.required; });
+      var catStatus = {}; // catId → true (has files) | false (empty)
+      var resolved  = 0;
+
+      function updateProgress() {
+        var filled    = Object.keys(catStatus).filter(function(k){ return catStatus[k]; }).length;
+        var reqFilled = required.filter(function(c){ return catStatus[c.id]; }).length;
+        var optFilled = optional.filter(function(c){ return catStatus[c.id]; }).length;
+        var pct       = total > 0 ? Math.round((filled / total) * 100) : 0;
+        var allReqDone = reqFilled === required.length;
+
+        var bar     = document.getElementById('sf-prog-bar');
+        var pctEl   = document.getElementById('sf-prog-pct');
+        var label   = document.getElementById('sf-prog-label');
+        var reqIcon = document.getElementById('sf-prog-req-icon');
+        var reqText = document.getElementById('sf-prog-req-text');
+        var optText = document.getElementById('sf-prog-opt-text');
+        if (!bar) return;
+
+        bar.style.width = pct + '%';
+        bar.style.background = allReqDone
+          ? 'linear-gradient(90deg,var(--success),#52B788)'
+          : pct > 0
+            ? 'linear-gradient(90deg,var(--gold),var(--gold-light))'
+            : 'var(--border-light)';
+
+        pctEl.textContent = pct + '%';
+        pctEl.style.color = allReqDone ? 'var(--success)' : 'var(--navy)';
+
+        if (resolved < total) {
+          label.textContent = 'Checking folders (' + resolved + ' of ' + total + ')...';
+        } else if (pct === 100) {
+          label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All documents submitted!</span>';
+        } else if (allReqDone) {
+          label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All required documents submitted</span>'
+            + ' &mdash; ' + (total - filled) + ' optional remaining';
+        } else {
+          label.textContent = filled + ' of ' + total + ' categories have files';
+        }
+
+        reqIcon.style.color = allReqDone ? 'var(--success)' : 'var(--danger)';
+        reqIcon.textContent  = allReqDone ? '✓' : '○';
+        reqText.textContent  = 'Required: ' + reqFilled + ' / ' + required.length + ' submitted';
+        reqText.style.color  = allReqDone ? 'var(--success)' : 'var(--danger)';
+        optText.textContent  = 'Optional: ' + optFilled + ' / ' + optional.length + ' submitted';
+      }
+
+      // Expose updater so wireCategoryCard can call it after file count resolves
+      FileCache.reportCategoryStatus = function(catId, hasFiles) {
+        catStatus[catId] = hasFiles;
+        resolved++;
+        updateProgress();
+        // Update per-category dot
+        var dot = document.getElementById('sf-prog-dot-' + catId);
+        var pill = document.getElementById('sf-prog-cat-' + catId);
+        if (dot && pill) {
+          if (hasFiles) {
+            dot.style.background = 'var(--success)';
+            pill.style.borderColor = 'var(--success)';
+            pill.style.background = 'var(--success-bg)';
+            pill.style.color = 'var(--success)';
+          } else {
+            var cat = API_CONFIG.uploadCategories.find(function(c){ return c.id === catId; });
+            var isReq = cat && cat.required;
+            dot.style.background = isReq ? 'var(--danger)' : 'var(--border)';
+            pill.style.borderColor = isReq ? 'var(--danger)' : 'var(--border)';
+            pill.style.color = isReq ? 'var(--danger)' : 'var(--text-muted)';
+          }
+        }
+      };
 
       // Wire category upload buttons and toggles
       API_CONFIG.uploadCategories.forEach(function(cat) {
@@ -2687,7 +2802,7 @@ function uploadToCategory(cat, files) {
         } else {
           showToast('"' + file.name + '" uploaded successfully.', 'success');
           if (progEl) progEl.remove();
-          // Refresh category file list and all-files section
+          // Refresh category file list, all-files section, and progress bar
           refreshCategoryFiles(cat, catFolderId);
           loadAllFiles(FileCache.matterFolderId);
         }
@@ -2706,6 +2821,11 @@ function refreshCategoryFiles(cat, catFolderId) {
     if (countEl) {
       countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
       countEl.style.color = (cat.required && files.length === 0) ? 'var(--danger)' : 'var(--text-muted)';
+    }
+
+    // Report to progress tracker
+    if (FileCache.reportCategoryStatus) {
+      FileCache.reportCategoryStatus(cat.id, files.length > 0);
     }
 
     if (!filesEl) return;
