@@ -776,19 +776,19 @@ var TEST_ACCOUNTS = [
 // ── API CONFIGURATION ──────────────────────────────────
 var API_CONFIG = {
   // Logic App: Appointments
-  appointmentsUrl: 'https://prod-18.northcentralus.logic.azure.com:443/workflows/a9237874b54145aa9f0be2480d532edc/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=jgryGO2-eAqX-CY9-wHrGZftdTcB71hIIrUWlI5_jpk',
+  appointmentsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-APPT-SIG',
 
   // Logic App: Case / Staff
-  caseUrl: 'https://prod-27.northcentralus.logic.azure.com:443/workflows/3ad1f9f76fb646c28da08e833d4a2d24/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=hAqGyzcdJ-w_yHcpYXyezLgJ0Xu5ylGFszd9hlryWps',
+  caseUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-CASE-SIG',
 
   // Logic App: Case Tasks
-  tasksUrl: 'https://prod-03.northcentralus.logic.azure.com:443/workflows/a822cb93b49b48669203067a8bfda3a8/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=mYFd3qwxZqyoYzXC6wESxBQ4-VKwR25TNzSVlrkFPPY',
+  tasksUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-TASKS-SIG',
 
   // Logic App: Legal Issues
-  issuesUrl: 'https://prod-17.northcentralus.logic.azure.com:443/workflows/c2eab391c9b64cdaa6817c8604afd4d4/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=aus9CpC7tbuVwxHTaKXSAcS9cP6aowkNA5t2xwg9ez4',
+  issuesUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-ISSUES-SIG',
 
   // Logic App: Marital Balance Sheet
-  mbsUrl: 'https://prod-01.northcentralus.logic.azure.com:443/workflows/a22158cc747041fcb94fbb42c08c64de/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=OEjDd8a8FTWb5sFmIBycl_1LH_iisR3Qk3QESsbnUwA',
+  mbsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
 
   // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
   //
@@ -1538,12 +1538,17 @@ function fetchIssues(matterId, callback) {
   xhr.onerror = function() {
     console.warn('[Issues API] Network error — using mock issues data.');
     var mock = [
-      { id:1, Issue:'Child Custody & Parenting Time',        'Issue Description':'Parties near 70/30 split; mediation scheduled for July 23.',   'Issue Importance':5040, matterId:matterId },
-      { id:2, Issue:'Equitable Division of Marital Home',    'Issue Description':'Third-party appraisal ordered by court. Value TBD.',            'Issue Importance':5040, matterId:matterId },
-      { id:3, Issue:'Alimony / Spousal Support',             'Issue Description':'Counterparty filed opposition. Hearing set for August.',         'Issue Importance':5041, matterId:matterId },
-      { id:4, Issue:'Division of Retirement Accounts',       'Issue Description':'QDRO attorney retained. Awaiting plan administrator response.', 'Issue Importance':5041, matterId:matterId },
-      { id:5, Issue:'Business Valuation',                    'Issue Description':'CPA forensic analysis underway. Report expected in 6 weeks.',    'Issue Importance':5042, matterId:matterId },
-      { id:6, Issue:'Child Support Calculation',             'Issue Description':'CS worksheet pending final income figures from both parties.',    'Issue Importance':5042, matterId:matterId }
+      { id:1,  Issue:'Child Custody & Parenting Time',     'Sub Issue':4862, 'Issue Description':'Parties near 70/30 split; mediation scheduled for July 23.',          'Issue Importance':5040, matterId:matterId },
+      { id:2,  Issue:'Child Custody & Parenting Time',     'Sub Issue':4864, 'Issue Description':'Co-parenting plan under negotiation between counsel.',                'Issue Importance':5041, matterId:matterId },
+      { id:3,  Issue:'Child Custody & Parenting Time',     'Sub Issue':5050, 'Issue Description':'Home study scheduled for both residences.',                            'Issue Importance':5041, matterId:matterId },
+      { id:4,  Issue:'Equitable Division of Marital Home', 'Sub Issue':4879, 'Issue Description':'Third-party appraisal ordered by court. Value TBD.',                   'Issue Importance':5040, matterId:matterId },
+      { id:5,  Issue:'Equitable Division of Marital Home', 'Sub Issue':5035, 'Issue Description':'Separate property contribution being documented from pre-marital funds.', 'Issue Importance':5041, matterId:matterId },
+      { id:6,  Issue:'Alimony / Spousal Support',          'Sub Issue':4841, 'Issue Description':'Counterparty filed opposition. Hearing set for August.',               'Issue Importance':5041, matterId:matterId },
+      { id:7,  Issue:'Alimony / Spousal Support',          'Sub Issue':4845, 'Issue Description':'Marriage length factor being argued by opposing counsel.',             'Issue Importance':5042, matterId:matterId },
+      { id:8,  Issue:'Division of Retirement Accounts',    'Sub Issue':null, 'Issue Description':'QDRO attorney retained. Awaiting plan administrator response.',        'Issue Importance':5041, matterId:matterId },
+      { id:9,  Issue:'Business Valuation',                 'Sub Issue':4876, 'Issue Description':'CPA forensic analysis underway. Report expected in 6 weeks.',          'Issue Importance':5042, matterId:matterId },
+      { id:10, Issue:'Child Support Calculation',          'Sub Issue':4830, 'Issue Description':'CS worksheet pending final income figures from both parties.',         'Issue Importance':5042, matterId:matterId },
+      { id:11, Issue:'Child Support Calculation',          'Sub Issue':4829, 'Issue Description':'Private school tuition factored into proposed worksheet.',             'Issue Importance':5042, matterId:matterId }
     ];
     IssueCache.data = mock;
     IssueCache.matterId = matterId;
@@ -1556,6 +1561,87 @@ function fetchIssues(matterId, callback) {
 
 // Aderant picklist codes for Issue Importance (Integer2 field)
 var IMPORTANCE_MAP = { 5040: 'High', 5041: 'Medium', 5042: 'Low' };
+
+// Sub Issue picklist codes (Aderant CUSTOM_CASEINFO_L2)
+var SUBISSUE_MAP = {
+  4836: 'AL: Condition - Inability to Work (19-6-5(a)(3))',
+  4835: 'AL: Condition - Disability (19-6-5(a)(3))',
+  4837: 'AL: Condition - Near Retirement (19-6-5(a)(3)',
+  4838: 'AL: Conduct - Adultery',
+  4839: 'AL: Conduct - Other',
+  4883: 'AL: Education-Earning Capacity (19-6-5(a)(3))',
+  4840: 'AL: Education-Reemployment (19-6-5(a)(5))',
+  4842: 'AL: Financial Resources - Assets (19-6-5(a)(4))',
+  4843: 'AL: Financial Resources - Fixed Liabilities (19-6-5(a)(4))',
+  4841: 'AL: Financial Resources - Income (19-6-5(a)(4))',
+  4845: 'AL: Marriage length (19-6-5(a)(2))',
+  4846: 'AL: Other Considerations (Unique Needs) (19-6-5(a)(8))',
+  4844: 'AL: Other-Marital Contributions (19-6-5(a)(6))',
+  4847: 'AL: Other-Standard of Living during Marriage (19-6-5(a)(1))',
+  4860: 'CC: Alienation (19-9-3(d))',
+  4861: 'CC: Bonding with Parents/Siblings (19-9-3(a)(3)(A) and (B))',
+  4862: 'CC: Capacity (Love & Needs) (19-9-3(a)(3)(C) &(E))',
+  4863: "CC: Child's Special Needs (19-9-3(a)(3)(D) &(L))",
+  4864: 'CC: Co-Parenting (19-9-3(a)(3)(N))',
+  4865: 'CC: Continuity (19-9-3(a)(3)(G))',
+  4866: 'CC: Elections (19-9-3(a)(5&6)',
+  4867: 'CC: Employment Schedule (19-9-3(a)(3)(K))',
+  4868: 'CC: Evaluations (GAL/Custody) (19-9-3(a)(3)(O))',
+  4869: 'CC: Existing Parenting Schedule (19-9-3(a)(3)(G))',
+  4870: 'CC: Family Unit Stability / Support (19-9-3(a)(3)(H))',
+  5050: 'CC: Home Environment (19-9-3(a)(3)(F))',
+  4871: 'CC: Mental/Physical Health of Parent (19-9-3(a)(3)(I))',
+  4872: 'CC: Other Concerns',
+  5051: "CC: Parent's past performance (19-9-3(a)(3)(M))",
+  4873: 'CC: Parental Involvement (19-9-3(a)(3)(J))',
+  4874: 'CC: Safety-Abuse (Physical/Verbal) (19-9-3(a)(3)(P))',
+  4875: 'CC: Safety-Alcohol/Drugs/Substances (19-9-3(a)(3)(Q))',
+  4821: 'CS: Dental/Vision Insurance',
+  4822: 'CS: Extracurricular Expenses',
+  4823: 'CS: Extraordinary Medical Expenses',
+  4824: 'CS: Health Insurance (Children)',
+  4825: 'CS: High Income',
+  4826: 'CS: Life Insurance (Coverage/premiums)',
+  4885: 'CS: Non-Specific',
+  4827: 'CS: Other Children Under CS Order/Household',
+  4828: 'CS: Parenting Time',
+  4829: 'CS: Private School/Tutoring',
+  4830: 'CS: Qualified Children',
+  4831: 'CS: Summer Camps',
+  4832: 'CS: Visitation Related Expenses',
+  4833: 'CS: Work Related Child Care',
+  4876: 'ED: Business Valuation',
+  4877: 'ED: Conduct / Contribution',
+  4879: 'ED: Home Valuation',
+  4880: 'ED: Intent',
+  4881: 'ED: Other',
+  4882: 'ED: Other Property Valuation',
+  5043: 'ED: Personal Property',
+  5039: 'ED: Post-Nuptial Agreement',
+  5038: 'ED: Prenuptial Agreement',
+  5035: 'ED: Separate Property',
+  5036: 'ED: Taxes',
+  4853: 'Fees-Alimony/Support 19-6-2',
+  4854: 'Fees-Alimony/Support Mod 19-6-22',
+  4849: 'Fees-Bad Faith 13-6-11',
+  4855: 'Fees-Custody 19-6-3',
+  4857: 'Fees-Custody 19-9-3(g)',
+  4858: 'Fees-Discovery Abuse 9-11-37',
+  4851: 'Fees-FV 19-13-4',
+  4856: 'Fees-Paternity 19-7-50',
+  4859: 'Fees-Penalty 9-15-14',
+  4852: 'Fees-Prevailing Authority 19-6-19',
+  4850: 'Fees-Stalking/FV 16-5-94',
+  5044: 'LC: Education',
+  5046: 'LC: Extra-Curricular Activities',
+  5045: 'LC: Medical',
+  5047: 'LC: Religion'
+};
+
+function subIssueLabel(code) {
+  var n = parseInt(code, 10);
+  return SUBISSUE_MAP[n] || (code ? String(code) : null);
+}
 
 function importanceBadge(n) {
   var code = parseInt(n, 10);
@@ -1593,10 +1679,9 @@ function renderIssues(el) {
       return;
     }
 
-    var sorted = issues.slice().sort(importanceSort);
-    var high   = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5040; });
-    var medium = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5041; });
-    var low    = sorted.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5042 || !i['Issue Importance']; });
+    var high   = issues.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5040; });
+    var medium = issues.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5041; });
+    var low    = issues.filter(function(i){ return parseInt(i['Issue Importance'],10) === 5042 || !i['Issue Importance']; });
 
     var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
 
@@ -1606,38 +1691,102 @@ function renderIssues(el) {
         + badge(low.length    + ' Low',    'badge-neutral');
     }
 
-    var rows = '';
-    sorted.forEach(function(iss, idx) {
-      rows += '<tr style="cursor:pointer" data-issidx="' + idx + '">'
-        + '<td style="font-weight:500">' + (iss['Issue'] || '—') + '</td>'
-        + '<td>' + importanceBadge(iss['Issue Importance']) + '</td>'
-        + '<td style="color:var(--text-muted);font-size:13px;max-width:340px">'
-        + (iss['Issue Description'] ? truncate(iss['Issue Description'], 90) : '—') + '</td>'
-        + '</tr>';
+    // ── Group rows by Issue name ─────────────────────
+    var groups = {};      // issueName → array of row objects
+    var groupOrder = [];  // preserves order of first appearance, sorted by highest importance within
+    issues.forEach(function(iss, idx) {
+      var key = iss['Issue'] || 'Other';
+      if (!groups[key]) {
+        groups[key] = [];
+        groupOrder.push(key);
+      }
+      groups[key].push({ data: iss, idx: idx });
+    });
+
+    // Sort groups by their most severe (lowest code number = highest importance) member
+    var importanceOrder = { 5040: 1, 5041: 2, 5042: 3 };
+    groupOrder.sort(function(a, b) {
+      var aMin = Math.min.apply(null, groups[a].map(function(r){ return importanceOrder[parseInt(r.data['Issue Importance'],10)] || 99; }));
+      var bMin = Math.min.apply(null, groups[b].map(function(r){ return importanceOrder[parseInt(r.data['Issue Importance'],10)] || 99; }));
+      return aMin - bMin;
+    });
+
+    // ── Build grouped cards ───────────────────────────
+    var groupsHtml = '';
+    groupOrder.forEach(function(issueName, gIdx) {
+      var rows = groups[issueName];
+      // Highest importance in this group determines the group header badge
+      var topImportance = rows.reduce(function(min, r) {
+        var code = parseInt(r.data['Issue Importance'], 10);
+        var rank = importanceOrder[code] || 99;
+        return rank < min.rank ? { rank: rank, code: code } : min;
+      }, { rank: 99, code: null }).code;
+
+      var subRows = '';
+      rows.forEach(function(r) {
+        var iss = r.data;
+        var subLabel = subIssueLabel(iss['Sub Issue']);
+        subRows += '<tr style="cursor:pointer" data-issidx="' + r.idx + '">'
+          + '<td style="color:var(--text);font-size:13px;max-width:280px">'
+          + (subLabel || '<span style="color:var(--text-muted);font-style:italic">No sub issue specified</span>') + '</td>'
+          + '<td>' + importanceBadge(iss['Issue Importance']) + '</td>'
+          + '<td style="color:var(--text-muted);font-size:13px;max-width:300px">'
+          + (iss['Issue Description'] ? truncate(iss['Issue Description'], 80) : '—') + '</td>'
+          + '</tr>';
+      });
+
+      groupsHtml += '<div class="card" style="margin-bottom:14px">'
+        + '<div class="card-header sf-category-header" data-groupidx="' + gIdx + '" style="cursor:pointer;user-select:none;background:#fff">'
+        + '<span class="card-title" style="display:flex;align-items:center;gap:8px">'
+        + issueName + importanceBadge(topImportance)
+        + '</span>'
+        + '<div style="display:flex;align-items:center;gap:10px">'
+        + '<span style="font-size:12px;color:var(--text-muted)">' + rows.length + ' sub-issue' + (rows.length !== 1 ? 's' : '') + '</span>'
+        + '<span class="issue-group-arrow" style="color:var(--text-muted);font-size:12px">&#9660;</span>'
+        + '</div></div>'
+        + '<div class="issue-group-body" data-groupbody="' + gIdx + '" style="display:block">'
+        + '<table class="data-table"><thead><tr><th>Sub Issue</th><th>Importance</th><th>Summary</th></tr></thead>'
+        + '<tbody>' + subRows + '</tbody></table>'
+        + '</div></div>';
     });
 
     bodyEl.innerHTML =
       '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
       + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
       + 'Last refreshed at ' + refreshTime + '</div>'
-      + '<div class="card"><table class="data-table">'
-      + '<thead><tr><th>Issue</th><th>Importance</th><th>Summary</th></tr></thead>'
-      + '<tbody>' + rows + '</tbody></table></div>'
+      + groupsHtml
       + '<p style="font-size:11.5px;color:var(--text-muted);margin-top:10px">'
-      + 'Click any issue for full details. ' + sorted.length + ' total issue' + (sorted.length !== 1 ? 's' : '') + ' on record.</p>';
+      + 'Click any row for full details. ' + issues.length + ' total issue' + (issues.length !== 1 ? 's' : '')
+      + ' across ' + groupOrder.length + ' issue type' + (groupOrder.length !== 1 ? 's' : '') + '.</p>';
 
+    // Wire group collapse/expand
+    bodyEl.querySelectorAll('.sf-category-header[data-groupidx]').forEach(function(header) {
+      header.addEventListener('click', function() {
+        var idx  = this.dataset.groupidx;
+        var body = bodyEl.querySelector('.issue-group-body[data-groupbody="' + idx + '"]');
+        var arrow = this.querySelector('.issue-group-arrow');
+        var isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        arrow.innerHTML = isOpen ? '&#9654;' : '&#9660;';
+      });
+    });
+
+    // Wire row clicks for detail modal
     bodyEl.querySelectorAll('tr[data-issidx]').forEach(function(row) {
       row.addEventListener('click', function() {
-        showIssueDetail(sorted[parseInt(this.dataset.issidx, 10)]);
+        showIssueDetail(issues[parseInt(this.dataset.issidx, 10)]);
       });
     });
   });
 }
 
 function showIssueDetail(iss) {
+  var subLabel = subIssueLabel(iss['Sub Issue']);
   var body = '<table style="width:100%;font-size:13.5px;border-collapse:collapse">'
     + '<tr><td style="padding:9px 0;color:var(--text-muted);width:120px;vertical-align:top;border-bottom:1px solid var(--border-light)">Issue</td>'
     + '<td style="padding:9px 0;font-weight:600;border-bottom:1px solid var(--border-light)">' + (iss['Issue'] || '—') + '</td></tr>'
+    + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Sub Issue</td>'
+    + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + (subLabel || '<span style="color:var(--text-muted);font-style:italic">Not specified</span>') + '</td></tr>'
     + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top;border-bottom:1px solid var(--border-light)">Importance</td>'
     + '<td style="padding:9px 0;border-bottom:1px solid var(--border-light)">' + importanceBadge(iss['Issue Importance']) + '</td></tr>'
     + '<tr><td style="padding:9px 0;color:var(--text-muted);vertical-align:top">Description</td>'
