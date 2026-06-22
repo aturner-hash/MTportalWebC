@@ -355,10 +355,17 @@ input,select,textarea{font-family:inherit}
         <span class="nav-label">Marital Balance Sheet</span>
       </a>
       <div class="nav-section-label">Documents</div>
-      <a class="nav-item" data-page="files">
+      <a class="nav-item" data-page="allfiles">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19C22 20.1 21.1 21 20 21H4C2.9 21 2 20.1 2 19V5C2 3.9 2.9 3 4 3H9L11 6H20C21.1 6 22 6.9 22 8V19Z"/></svg>
-        <span class="nav-label">File Manager</span>
-        <span class="nav-badge">3</span>
+        <span class="nav-label">All Files</span>
+      </a>
+      <a class="nav-item" data-page="clientuploads">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Client Uploads</span>
+      </a>
+      <a class="nav-item" data-page="firmdocs">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke-linejoin="round"/><path d="M14 2V8H20M9 13H15M9 17H15" stroke-linecap="round"/></svg>
+        <span class="nav-label">Case Documents</span>
       </a>
       <div class="nav-section-label">Account</div>
       <a class="nav-item" data-page="settings">
@@ -586,19 +593,21 @@ function switchMatterId(newId) {
 
 // ── NAVIGATION ─────────────────────────────────────────
 var pages = {
-  home:     { label:'Dashboard',             fn:renderDashboard },
-  calendar: { label:'Case Calendar',         fn:renderCalendar  },
-  tasks:    { label:'Case Tasks',            fn:renderTasks     },
-  issues:   { label:'Legal Issues',          fn:renderIssues    },
-  mbs:      { label:'Marital Balance Sheet', fn:renderMBS       },
-  files:    { label:'File Manager',          fn:renderFiles     },
-  settings: { label:'Settings',              fn:renderSettings  }
+  home:          { label:'Dashboard',             fn:renderDashboard      },
+  calendar:      { label:'Case Calendar',         fn:renderCalendar       },
+  tasks:         { label:'Case Tasks',             fn:renderTasks          },
+  issues:        { label:'Legal Issues',           fn:renderIssues         },
+  mbs:           { label:'Marital Balance Sheet',  fn:renderMBS            },
+  allfiles:      { label:'All Files',              fn:renderAllFilesPage   },
+  clientuploads: { label:'Client Uploads',         fn:renderClientUploads  },
+  firmdocs:      { label:'Case Documents',         fn:renderFirmDocuments  },
+  settings:      { label:'Settings',               fn:renderSettings       }
 };
 
 function navigate(page) {
   if (!pages[page]) return;
-  // Reset File Manager to its home sub-view whenever entered via main nav
-  if (page === 'files') { FilesNav.view = 'home'; FilesNav.stageId = null; }
+  // Reset checklist sub-state whenever Client Uploads is entered via main nav
+  if (page === 'clientuploads') { FilesNav.stageId = null; }
   document.querySelectorAll('.nav-item').forEach(function(el){
     el.classList.toggle('active', el.dataset.page === page);
   });
@@ -657,7 +666,7 @@ function renderDashboard(el) {
     + '</div></div>'
     + '</div>'
     + '<div class="card" style="margin-bottom:24px"><div class="card-header"><span class="card-title">Recent Files</span>'
-    + '<button class="btn-sm btn-outline" onclick="navigate(\'files\')">View All</button></div>'
+    + '<button class="btn-sm btn-outline" onclick="navigate(\'allfiles\')">View All</button></div>'
     + '<div>' + fileRows + '</div></div>'
     + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
     + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
@@ -771,7 +780,7 @@ function renderDashboard(el) {
 // Add as many rows as you need. Password is always "test" for all of them.
 // In production, remove this block and replace handleLogin with real auth.
 var TEST_ACCOUNTS = [
-  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: 'fo0c8987-8885-4735-bf57-9e35cee2724d' },
+  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: 'fo7ed4c8-20c0-4d6a-bc16-abbcfc128c6b' },
   { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matterId:99999, caseNumber:'DEV-OVERRIDE',  homeFolderId: null  }
 ];
 
@@ -836,7 +845,7 @@ var API_CONFIG = {
   checklistStages: [
     {
       id: 'client-homework',
-      label: 'Client Homework',
+      label: 'Items Needed From You',
       icon: '📋',
       description: 'Documents your attorney has requested directly from you.',
       categories: [
@@ -2505,6 +2514,35 @@ var SF = {
     });
   },
 
+  // Look up a folder by name WITHOUT creating it if missing.
+  // Use for folders staff manage/template directly in ShareFile (e.g. Case Documents).
+  findFolder: function(parentId, folderName, callback) {
+    SF.get('/Items(' + parentId + ')/Children?$filter=Name%20eq%20\'' + encodeURIComponent(folderName) + '\'&$select=Id,Name', function(err, data) {
+      if (err) { callback(err); return; }
+      var existing = data.value && data.value[0];
+      if (!existing) { callback('NOT_FOUND'); return; }
+      callback(null, existing.Id);
+    });
+  },
+
+  // Look up a folder whose name STARTS WITH any of the given prefixes (case-insensitive).
+  // Use when staff naming varies slightly across matters, e.g. ShareFile templates that
+  // produce "3. CASE DOCUMENTS" on some matters and "3. CASE DOCUMENTS (Read Only)" on others.
+  // Never creates a folder — purely a lookup.
+  findFolderByPrefix: function(parentId, prefixes, callback) {
+    SF.get('/Items(' + parentId + ')/Children?$select=Id,Name,ItemType', function(err, data) {
+      if (err) { callback(err); return; }
+      var items = (data.value || []).filter(sfIsFolder);
+      var lowerPrefixes = prefixes.map(function(p){ return p.toLowerCase(); });
+      var match = items.find(function(item) {
+        var name = (item.Name || '').toLowerCase();
+        return lowerPrefixes.some(function(p){ return name.indexOf(p) === 0; });
+      });
+      if (!match) { callback('NOT_FOUND'); return; }
+      callback(null, match.Id, match.Name);
+    });
+  },
+
   // Resolve the client's matter root folder.
   // Priority: 1) homeFolderId set on the account by staff
   //           2) Authenticated user's ShareFile home folder
@@ -2645,11 +2683,15 @@ function sfHandleStartup(onDone) {
 // Tracks which sub-view is showing inside the File Manager page:
 // 'home' = landing page with stage cards + collapsed sections
 // 'checklist' = focused single-stage checklist (stageId set)
-var FilesNav = { view: 'home', stageId: null };
+// ── FILE MANAGER NAVIGATION STATE ──────────────────────
+// Tracks which checklist stage is open when drilled into from Client Uploads.
+var FilesNav = { stageId: null };
 
-function renderFiles(el) {
-  el.innerHTML = '<div class="page-header"><div class="page-title">File Manager</div>'
-    + '<div class="page-subtitle">Upload required documents and access your case files securely.</div>'
+// Shared shell: page header + ShareFile auth check.
+// Calls onReady(bodyEl) once connected, or renders the connect screen / error.
+function renderShareFileShell(el, title, subtitle, onReady) {
+  el.innerHTML = '<div class="page-header"><div class="page-title">' + title + '</div>'
+    + '<div class="page-subtitle">' + subtitle + '</div>'
     + '<div class="page-actions">'
     + '<span class="integration-badge sf">&#128193; ShareFile</span>'
     + '<button class="btn-sm btn-outline" id="sf-refresh">&#8635; Refresh</button>'
@@ -2663,16 +2705,14 @@ function renderFiles(el) {
     FileCache.matterFolderId = null;
     FileCache.folders = {};
     FileCache.files = {};
-    renderFiles(el);
+    onReady.__rerender(el);
   });
 
-  // Check token state before attempting any API calls
   SF.getToken(function(err) {
     var bodyEl = document.getElementById('sf-body');
     if (!bodyEl) return;
 
     if (err === 'SF_NEEDS_AUTH') {
-      // Show a clean connect screen — no credentials needed in code
       bodyEl.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:48px">'
         + '<div style="font-size:40px;margin-bottom:16px">&#128193;</div>'
         + '<div style="font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--navy);margin-bottom:8px">Connect to ShareFile</div>'
@@ -2695,16 +2735,93 @@ function renderFiles(el) {
       return;
     }
 
-    if (FilesNav.view === 'checklist' && FilesNav.stageId) {
-      loadChecklistStage(el, API_CONFIG.matterId, FilesNav.stageId);
-    } else {
-      loadFileManager(el, API_CONFIG.matterId);
-    }
+    onReady(bodyEl, API_CONFIG.matterId);
   });
 }
 
-function loadFileManager(el, matterId) {
-  var bodyEl = document.getElementById('sf-body');
+// ── ALL FILES PAGE ──────────────────────────────────────
+function renderAllFilesPage(el) {
+  var onReady = function(bodyEl, matterId) {
+    SF.getMatterFolderId(matterId, function(err, matterFolderId) {
+      if (!bodyEl) return;
+      if (err) { bodyEl.innerHTML = sfErrorHtml(err); return; }
+
+      SF.get('/Items(' + matterFolderId + ')?$select=Id,Name', function(verifyErr, folder) {
+        if (verifyErr) {
+          bodyEl.innerHTML = sfErrorHtml('Folder "' + matterFolderId + '" could not be accessed: ' + verifyErr);
+          return;
+        }
+        FileCache.matterFolderId = matterFolderId;
+        FileCache.rootFolderName = folder.Name || 'Case Files';
+
+        bodyEl.innerHTML =
+          '<div class="card">'
+          + '<div class="card-header">'
+          + '<span class="card-title">&#128196; All Case Files</span>'
+          + '<span id="sf-file-count" class="badge badge-info">Loading...</span>'
+          + '</div>'
+          + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
+          + '</div>';
+
+        loadAllFiles(matterFolderId);
+      });
+    });
+  };
+  onReady.__rerender = renderAllFilesPage;
+  renderShareFileShell(el, 'All Files', 'Browse every document and folder in your case file.', onReady);
+}
+
+// ── CLIENT UPLOADS PAGE ─────────────────────────────────
+function renderClientUploads(el) {
+  var onReady = function(bodyEl, matterId) {
+    if (FilesNav.stageId) {
+      loadChecklistStage(bodyEl, matterId, FilesNav.stageId);
+    } else {
+      loadClientUploadsHome(bodyEl, matterId);
+    }
+  };
+  onReady.__rerender = renderClientUploads;
+  renderShareFileShell(el, 'Client Uploads', 'Upload the documents your attorney has requested from you.', onReady);
+}
+
+// ── FIRM DOCUMENTS PAGE ─────────────────────────────────
+function renderFirmDocuments(el) {
+  var onReady = function(bodyEl, matterId) {
+    SF.getMatterFolderId(matterId, function(err, matterFolderId) {
+      if (!bodyEl) return;
+      if (err) { bodyEl.innerHTML = sfErrorHtml(err); return; }
+
+      // Case Documents is templated directly in ShareFile by staff — the portal
+      // only looks it up, it never creates this folder or its subfolders.
+      // Matches "3. CASE DOCUMENTS" and "3. CASE DOCUMENTS (Read Only)" variants.
+      SF.findFolderByPrefix(matterFolderId, ['3. case documents'], function(cdErr, caseDocsFolderId, actualName) {
+        if (cdErr) {
+          bodyEl.innerHTML = '<div class="card"><div class="card-body">'
+            + emptyState('&#128193;', 'No case documents yet', 'Documents your attorney prepares — drafts, filings, court orders, and correspondence — will appear here once your legal team adds them.')
+            + '</div></div>';
+          return;
+        }
+        FileCache.matterFolderId = matterFolderId;
+        FileCache.rootFolderName = actualName || 'Case Documents';
+
+        bodyEl.innerHTML =
+          '<div class="card">'
+          + '<div class="card-header">'
+          + '<span class="card-title">&#128196; Case Documents</span>'
+          + '<span id="sf-file-count" class="badge badge-info">Loading...</span>'
+          + '</div>'
+          + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
+          + '</div>';
+
+        loadAllFiles(caseDocsFolderId);
+      });
+    });
+  };
+  onReady.__rerender = renderFirmDocuments;
+  renderShareFileShell(el, 'Case Documents', 'Drafts, filings, court orders, and correspondence prepared by your legal team.', onReady);
+}
+
+function loadClientUploadsHome(bodyEl, matterId) {
   if (!bodyEl) return;
 
   SF.getMatterFolderId(matterId, function(err, matterFolderId) {
@@ -2738,8 +2855,6 @@ function loadFileManager(el, matterId) {
 
       // ── Stage cards — one per checklist stage, click to drill in ──
       var stageCardsHtml = API_CONFIG.checklistStages.map(function(stage) {
-        var reqCount = stage.categories.filter(function(c){ return c.required; }).length;
-        var optCount = stage.categories.length - reqCount;
         return '<div class="sf-stage-card" data-stageid="' + stage.id + '" style="cursor:pointer;border:1.5px solid var(--border-light);border-radius:var(--radius-lg);padding:18px;background:#fff;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:10px">'
           + '<div style="display:flex;align-items:center;gap:10px">'
           + '<span style="font-size:24px">' + stage.icon + '</span>'
@@ -2768,25 +2883,13 @@ function loadFileManager(el, matterId) {
         + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime
         + ' &mdash; Folder: <strong style="color:var(--navy)">' + (folder.Name || matterFolderId) + '</strong></div>'
 
-        // ── Checklist Stages — primary entry point ──
-        + '<div style="margin-bottom:22px">'
-        + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">'
-        + '<h3 style="font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--navy)">Document Checklists</h3>'
-        + '<span style="font-size:12px;color:var(--text-muted)">Click a checklist to view and upload</span>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">'
-        + stageCardsHtml
-        + '</div></div>'
-
-        // ── Document Progress — collapsed by default ──
-        + '<div class="card" style="margin-bottom:14px">'
-        + '<div class="card-header sf-collapsible-header" id="sf-progress-toggle" style="cursor:pointer;user-select:none">'
-        + '<span class="card-title">&#127775; Document Progress (All Checklists)</span>'
-        + '<div style="display:flex;align-items:center;gap:10px">'
+        // ── Document Progress — always visible at top ──
+        + '<div class="card" style="margin-bottom:20px">'
+        + '<div class="card-header">'
+        + '<span class="card-title">&#127775; Document Progress</span>'
         + '<span id="sf-prog-label" style="font-size:12px;color:var(--text-muted)">Checking folders...</span>'
-        + '<span class="sf-collapse-arrow" style="color:var(--text-muted);font-size:12px">&#9654;</span>'
-        + '</div></div>'
-        + '<div id="sf-progress-body" style="display:none;padding:16px 20px">'
+        + '</div>'
+        + '<div style="padding:16px 20px">'
         + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
         + '<div style="flex:1;height:12px;background:var(--border-light);border-radius:6px;overflow:hidden">'
         + '<div id="sf-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:6px;transition:width .4s ease"></div>'
@@ -2815,39 +2918,23 @@ function loadFileManager(el, matterId) {
         + '</div>'
         + '</div></div>'
 
-        // ── All Case Files — collapsed by default ──
-        + '<div class="card">'
-        + '<div class="card-header sf-collapsible-header" id="sf-allfiles-toggle" style="cursor:pointer;user-select:none">'
-        + '<span class="card-title">&#128196; All Case Files</span>'
-        + '<div style="display:flex;align-items:center;gap:10px">'
-        + '<span id="sf-file-count" class="badge badge-info">Click to load</span>'
-        + '<span class="sf-collapse-arrow" style="color:var(--text-muted);font-size:12px">&#9654;</span>'
-        + '</div></div>'
-        + '<div id="sf-all-files-wrap" style="display:none">'
-        + '<div id="sf-all-files"><div style="text-align:center;padding:28px;color:var(--text-muted)">Loading files...</div></div>'
+        // ── Checklist Stages ──────────────────────
+        + '<div>'
+        + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">'
+        + '<h3 style="font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--navy)">Document Checklists</h3>'
+        + '<span style="font-size:12px;color:var(--text-muted)">Click a checklist to view and upload</span>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">'
+        + stageCardsHtml
         + '</div></div>';
-
-      // ── Wire collapsible section toggles ──────────
-      var allFilesLoaded = false;
-      document.getElementById('sf-progress-toggle').addEventListener('click', function() {
-        toggleCollapsible(this, 'sf-progress-body');
-      });
-      document.getElementById('sf-allfiles-toggle').addEventListener('click', function() {
-        var nowOpen = toggleCollapsible(this, 'sf-all-files-wrap');
-        if (nowOpen && !allFilesLoaded) {
-          allFilesLoaded = true;
-          loadAllFiles(matterFolderId);
-        }
-      });
 
       // ── Wire stage card clicks — navigate to focused checklist view ──
       bodyEl.querySelectorAll('.sf-stage-card').forEach(function(card) {
         card.addEventListener('mouseenter', function() { this.style.borderColor = 'var(--gold)'; this.style.boxShadow = 'var(--shadow)'; });
         card.addEventListener('mouseleave', function() { this.style.borderColor = 'var(--border-light)'; this.style.boxShadow = 'none'; });
         card.addEventListener('click', function() {
-          FilesNav.view = 'checklist';
           FilesNav.stageId = this.dataset.stageid;
-          navigate('files');
+          navigate('clientuploads');
         });
       });
 
@@ -2941,7 +3028,7 @@ function loadFileManager(el, matterId) {
           updateStageCard(stageId);
         }
 
-        // Update per-category dot in the collapsed progress panel
+        // Update per-category dot in the progress panel
         var dot = document.getElementById('sf-prog-dot-' + catId);
         var pill = document.getElementById('sf-prog-cat-' + catId);
         if (dot && pill) {
@@ -2961,7 +3048,7 @@ function loadFileManager(el, matterId) {
       };
 
       // ── Silently resolve every category's file count (no UI built yet) ──
-      // This powers both the stage card mini-bars and the collapsed progress panel
+      // This powers both the stage card mini-bars and the progress panel
       // without requiring the client to open every checklist first.
       API_CONFIG.checklistStages.forEach(function(stage) {
         stage.categories.forEach(function(cat) {
@@ -2990,14 +3077,13 @@ function toggleCollapsible(headerEl, bodyId) {
 }
 
 // ── CHECKLIST STAGE — focused single-stage view ────────
-function loadChecklistStage(el, matterId, stageId) {
-  var bodyEl = document.getElementById('sf-body');
+function loadChecklistStage(bodyEl, matterId, stageId) {
   if (!bodyEl) return;
 
   var stage = API_CONFIG.checklistStages.find(function(s){ return s.id === stageId; });
   if (!stage) {
-    FilesNav.view = 'home';
-    loadFileManager(el, matterId);
+    FilesNav.stageId = null;
+    loadClientUploadsHome(bodyEl, matterId);
     return;
   }
 
@@ -3011,7 +3097,7 @@ function loadChecklistStage(el, matterId, stageId) {
     bodyEl.innerHTML =
       '<div style="margin-bottom:16px">'
       + '<a id="sf-back-to-home" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--gold-muted);font-weight:600;cursor:pointer">'
-      + '&#8592; Back to File Manager</a>'
+      + '&#8592; Back to Client Uploads</a>'
       + '</div>'
       + '<div class="card">'
       + '<div class="card-header">'
@@ -3022,15 +3108,14 @@ function loadChecklistStage(el, matterId, stageId) {
       + '</div>';
 
     document.getElementById('sf-back-to-home').addEventListener('click', function() {
-      FilesNav.view = 'home';
       FilesNav.stageId = null;
-      navigate('files');
+      navigate('clientuploads');
     });
 
     // Wire category upload buttons and toggles — pass stage.id so progress reporting
-    // (if the home view is later reopened) stays consistent
+    // (if Client Uploads home is later reopened) stays consistent
     stage.categories.forEach(function(cat) {
-      wireCategoryCard(cat, matterFolderId, el, matterId, stage.id);
+      wireCategoryCard(cat, matterFolderId, bodyEl, matterId, stage.id);
     });
   });
 }
@@ -3377,7 +3462,7 @@ function sfErrorHtml(err) {
     + 'and add <strong>https://aturner-hash.github.io</strong></div>'
     + '</div></div>'
     + '<div style="margin-top:12px">'
-    + '<button class="btn-sm btn-outline" onclick="SF.clearTokens();navigate(\'files\')">&#8635; Reconnect ShareFile</button>'
+    + '<button class="btn-sm btn-outline" onclick="SF.clearTokens();navigate(document.querySelector(\'.nav-item.active\').dataset.page)">&#8635; Reconnect ShareFile</button>'
     + '</div></div></div>';
 }
 
@@ -3463,7 +3548,7 @@ loadBookingsConfig();
 sfHandleStartup(function(justAuthed) {
   if (justAuthed && currentUser) {
     showToast('Connected to ShareFile successfully.', 'success');
-    navigate('files');
+    navigate('clientuploads');
   }
 });
 
