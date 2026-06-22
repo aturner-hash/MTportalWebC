@@ -428,7 +428,7 @@ input,select,textarea{font-family:inherit}
 var MockData = {
   user: {
     name: 'Rachel Geller', initials: 'RG',
-    email: 'rachel.geller@email.com', caseNumber: 'Case #11114-2',
+    email: 'rachel.geller@email.com',
     attorney: { name: 'Robert Tharp', role: 'Lead Attorney', initials: 'RT',
       email: 'rtharp@mtlawoffice.com', phone: '(678) 879-9000' }
   },
@@ -532,8 +532,8 @@ function closeModal() {
 }
 
 // ── AUTH ───────────────────────────────────────────────
-// currentUser shape: { profile: {name, initials, email, caseNumber},
-//                       matters: [...], activeMatter: {matterId, caseNumber, caseTitle, homeFolderId} }
+// currentUser shape: { profile: {name, initials, email},
+//                       matters: [...], activeMatter: {matterId, caseTitle, homeFolderId} }
 var currentUser = null;
 
 // Real entry point — triggered by the "Sign In with ShareFile" button.
@@ -606,7 +606,7 @@ function showMatterPicker() {
   var cardsHtml = matters.map(function(m, idx) {
     return '<div class="matter-picker-card" data-idx="' + idx + '" style="cursor:pointer;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;background:#fff;transition:border-color .15s,box-shadow .15s;margin-bottom:12px">'
       + '<div style="font-family:var(--font-d);font-size:17px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
-      + '<div style="font-size:13px;color:var(--text-muted);margin-top:4px">' + (m.caseNumber || '') + '</div>'
+      + '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Matter ID: ' + m.matterId + '</div>'
       + '<div style="margin-top:10px;font-size:12.5px;color:var(--gold-muted);font-weight:600">Open this case &#8594;</div>'
       + '</div>';
   }).join('');
@@ -652,7 +652,7 @@ function bootPortal(profile, matters, activeMatter) {
   try { sessionStorage.setItem('portal_session', JSON.stringify(currentUser)); } catch(e) {}
 
   document.getElementById('user-name').textContent        = profile.name;
-  document.getElementById('user-case').textContent        = activeMatter.caseNumber || '';
+  document.getElementById('user-case').textContent        = activeMatter.caseTitle || '';
   document.getElementById('user-avatar').textContent      = profile.initials;
   document.getElementById('topbar-matter-id').textContent = activeMatter.matterId;
 
@@ -746,7 +746,7 @@ function openMatterSwitcher() {
         var isActive = currentUser.activeMatter && currentUser.activeMatter.matterId === m.matterId;
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);cursor:pointer" data-switchidx="' + idx + '">'
           + '<div><div style="font-size:13.5px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-muted)">' + (m.caseNumber || '') + '</div></div>'
+          + '<div style="font-size:12px;color:var(--text-muted)">Matter ID: ' + m.matterId + '</div></div>'
           + (isActive ? '<span class="badge badge-success">Current</span>' : '<span style="color:var(--gold-muted);font-size:12px;font-weight:600">Open &#8594;</span>')
           + '</div>';
       }).join(''),
@@ -799,7 +799,7 @@ function toggleSidebar() {
 
 // ── DASHBOARD ──────────────────────────────────────────
 function renderDashboard(el) {
-  var u = currentUser || MockData.user;
+  var u = (currentUser && currentUser.profile) || MockData.user;
   var pending = TaskCache.data
     ? TaskCache.data.filter(function(t){ return taskStatusGroup(t.status) !== 'complete'; }).length
     : MockData.tasks.filter(function(t){ return !t.done; }).length;
@@ -949,12 +949,12 @@ function renderDashboard(el) {
 // In production, remove this block and replace handleLogin with real auth.
 var TEST_ACCOUNTS = [
   { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matters: [
-      { matterId:9827,  caseNumber:'Case #11114-2', caseTitle:'Test Case',      homeFolderId:'fo58f4d2-1fea-4843-9ed2-f563d92b9e71' },
-      { matterId:10285, caseNumber:'Case #11890-1', caseTitle:'Geller 2', homeFolderId:'fo090122-f433-481a-aea8-25a7cd29aa3d' }
+      { matterId:9827,  caseTitle:'Geller v. Geller',      homeFolderId:'fo58f4d2-1fea-4843-9ed2-f563d92b9e71' },
+      { matterId:10285, caseTitle:'Geller — Estate Matter', homeFolderId:'fo090122-f433-481a-aea8-25a7cd29aa3d' }
     ]
   },
   { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matters: [
-      { matterId:99999, caseNumber:'DEV-OVERRIDE', caseTitle:'Dev Override', homeFolderId:null }
+      { matterId:99999, caseTitle:'Dev Override', homeFolderId:null }
     ]
   }
 ];
@@ -978,10 +978,10 @@ var API_CONFIG = {
 
   // Logic App: Matter Lookup by ShareFile login email.
   // Input:  { "email": "client@example.com" }
-  // Output: { "matters": [ { "matterId": 9827, "caseNumber": "11114-2", "caseTitle": "Geller v. Geller", "homeFolderId": "fo5e0e87-..." }, ... ] }
+  // Output: { "matters": [ { "matterId": 9827, "caseTitle": "Geller v. Geller", "homeFolderId": "fo5e0e87-..." }, ... ] }
   // An empty "matters" array means no Aderant matter is linked to this email —
   // the portal shows a "contact our office" message rather than granting access.
-  matterLookupUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-LOOKUP-SIG',
+  matterLookupUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MATTERLOOKUP-SIG',
 
   // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
   //
@@ -2014,10 +2014,11 @@ function fetchMatterLookup(email, callback) {
 
   xhr.onerror = function() {
     console.warn('[Matter Lookup] Network error — using mock matter data for development.');
-    // Mock: pretend this ShareFile email maps to Rachel Geller's matter.
+    // Mock: pretend this ShareFile email maps to Rachel Geller's two matters.
     // Replace by wiring up the real Logic App URL above.
     var mock = [
-      { matterId: 9827, caseNumber: 'Case #11114-2', caseTitle: 'Geller v. Geller', homeFolderId: 'fo7ed4c8-20c0-4d6a-bc16-abbcfc128c6b' }
+      { matterId: 9827,  caseTitle: 'Geller v. Geller',       homeFolderId: 'fo58f4d2-1fea-4843-9ed2-f563d92b9e71' },
+      { matterId: 10285, caseTitle: 'Geller — Estate Matter', homeFolderId: 'fo090122-f433-481a-aea8-25a7cd29aa3d' }
     ];
     callback(null, mock);
   };
@@ -3531,7 +3532,7 @@ function handleFiles() {} // replaced by SF upload — kept as no-op to avoid re
 
 // ── SETTINGS ───────────────────────────────────────────
 function renderSettings(el) {
-  var u = currentUser || MockData.user;
+  var u = (currentUser && currentUser.profile) || MockData.user;
   el.innerHTML = '<div class="page-header"><div class="page-title">Settings</div>'
     + '<div class="page-subtitle">Manage your account preferences and integrations.</div></div>'
     + '<div class="grid-2">'
@@ -3622,11 +3623,11 @@ document.getElementById('dev-panel-toggle').addEventListener('click', function()
     var tr = document.createElement('tr');
     tr.style.cssText = 'cursor:pointer;border-bottom:1px solid #EAE4D8';
     var matterIdsLabel = acct.matters.map(function(m){ return m.matterId; }).join(', ');
-    var caseNumLabel   = acct.matters.map(function(m){ return m.caseNumber; }).join(' / ');
+    var caseTitleLabel = acct.matters.map(function(m){ return m.caseTitle; }).join(' / ');
     tr.innerHTML = '<td style="padding:7px 8px;font-weight:500;color:#1B2A4A">' + acct.name + '</td>'
       + '<td style="padding:7px 8px;color:#4A5568">' + acct.email + '</td>'
       + '<td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + matterIdsLabel + '</span></td>'
-      + '<td style="padding:7px 8px;color:#6B7280;font-size:11.5px">' + caseNumLabel + '</td>';
+      + '<td style="padding:7px 8px;color:#6B7280;font-size:11.5px">' + caseTitleLabel + '</td>';
     tr.addEventListener('mouseenter', function(){ this.style.background='#FFF8E8'; });
     tr.addEventListener('mouseleave', function(){ this.style.background=''; });
     tr.addEventListener('click', function(){
@@ -3655,7 +3656,7 @@ document.getElementById('dev-matter-go').addEventListener('click', function(){
   if (!id || isNaN(id)) { showToast('Enter a valid MatterId number.', 'error'); return; }
   // Boot directly into a dev override matter with the specified MatterId
   var devProfile = { name: 'Dev User (' + id + ')', initials: 'DV', email: 'dev@test.com' };
-  var devMatter  = { matterId: id, caseNumber: 'MatterId: ' + id, caseTitle: 'Dev User (' + id + ')', homeFolderId: null };
+  var devMatter  = { matterId: id, caseTitle: 'Dev User (' + id + ')', homeFolderId: null };
   bootPortal(devProfile, [devMatter], devMatter);
 });
 document.getElementById('dev-matter-id').addEventListener('keydown', function(e){
@@ -3682,7 +3683,7 @@ document.getElementById('matter-id-badge').addEventListener('click', function(){
     + allMatters.map(function(entry){
         var m = entry.matter;
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);cursor:pointer" onclick="document.getElementById(\'switch-matter-input\').value=' + m.matterId + '">'
-          + '<span style="font-size:13px">' + entry.accountName + ' <span style="color:var(--text-muted);font-size:11.5px">(' + m.caseNumber + ')</span></span>'
+          + '<span style="font-size:13px">' + entry.accountName + ' <span style="color:var(--text-muted);font-size:11.5px">(' + m.caseTitle + ')</span></span>'
           + '<span style="background:var(--navy);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + m.matterId + '</span></div>';
       }).join('')
     + '</div>',
