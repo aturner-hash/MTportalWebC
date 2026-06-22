@@ -247,39 +247,25 @@ input,select,textarea{font-family:inherit}
       </div>
     </div>
     <h1 class="login-heading">Welcome Back</h1>
-    <p class="login-subheading">Sign in to access your case files and updates.</p>
+    <p class="login-subheading">Sign in with ShareFile to access your case files and updates.</p>
     <div id="login-error" class="login-error hidden">Please enter your email and password.</div>
-    <div class="form-group">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" placeholder="you@example.com">
-    </div>
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="••••••••">
-    </div>
-    <div class="form-options">
-      <label class="checkbox-label"><input type="checkbox"> <span>Remember me</span></label>
-      <a href="#" class="forgot-link">Forgot password?</a>
-    </div>
-    <button class="btn-primary btn-full" id="login-btn">Sign In Securely</button>
-    <div class="login-footer">&#128274; Protected by Microsoft Azure Active Directory</div>
-    <div class="login-divider"><span>or</span></div>
-    <button class="btn-azure" id="azure-btn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M11.5 2L2 7.5V16.5L11.5 22L21 16.5V7.5L11.5 2Z" fill="#0078D4"/>
-        <path d="M11.5 2V22M2 7.5L21 7.5M2 16.5H21" stroke="white" stroke-width="1.2"/>
-      </svg>
-      Continue with Microsoft
+
+    <button class="btn-primary btn-full" id="sf-login-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px">
+      &#128274; Sign In with ShareFile
     </button>
+    <div class="login-footer">Your case documents and login are both secured by ShareFile.</div>
+    <p style="text-align:center;font-size:12px;margin-top:10px">
+      <a href="#" class="forgot-link" id="sf-forgot-link">Forgot your ShareFile password?</a>
+    </p>
 
     <!-- DEV TEST PANEL — remove or hide in production -->
     <div id="dev-panel" style="margin-top:24px;border:1.5px dashed #C9A84C;border-radius:8px;overflow:hidden">
       <div style="background:#1B2A4A;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" id="dev-panel-toggle">
-        <span style="color:#C9A84C;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px">&#128295; Developer Test Accounts</span>
+        <span style="color:#C9A84C;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px">&#128295; Developer Bypass (Test Accounts)</span>
         <span style="color:#C9A84C;font-size:14px" id="dev-panel-arrow">&#9660;</span>
       </div>
       <div id="dev-panel-body" style="background:#FFFBF0;padding:12px 14px">
-        <p style="font-size:11.5px;color:#6B7280;margin-bottom:10px">Click a row to auto-fill credentials. Password is always <strong>test</strong>.</p>
+        <p style="font-size:11.5px;color:#6B7280;margin-bottom:10px">For local testing only — bypasses ShareFile login entirely. Click a row to sign in instantly.</p>
         <table style="width:100%;border-collapse:collapse;font-size:12.5px" id="test-accounts-table">
           <thead>
             <tr style="background:#EDE9E0">
@@ -291,13 +277,13 @@ input,select,textarea{font-family:inherit}
           </thead>
           <tbody id="test-accounts-body">
             <!-- Static fallback rows — always visible even if JS hasn't run yet -->
-            <tr style="cursor:pointer;border-bottom:1px solid #EAE4D8" onclick="document.getElementById('email').value='rachel.geller@test.com';document.getElementById('password').value='test';">
+            <tr style="cursor:pointer;border-bottom:1px solid #EAE4D8" onclick="document.getElementById('email').value='rachel.geller@test.com';document.getElementById('password').value='test';handleLogin();">
               <td style="padding:7px 8px;font-weight:500;color:#1B2A4A">Rachel Geller</td>
               <td style="padding:7px 8px;color:#4A5568">rachel.geller@test.com</td>
               <td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">9827</span></td>
               <td style="padding:7px 8px;color:#6B7280;font-size:11.5px">Case #11114-2</td>
             </tr>
-            <tr style="cursor:pointer" onclick="document.getElementById('email').value='dev@test.com';document.getElementById('password').value='test';">
+            <tr style="cursor:pointer" onclick="document.getElementById('email').value='dev@test.com';document.getElementById('password').value='test';handleLogin();">
               <td style="padding:7px 8px;font-weight:500;color:#1B2A4A">Dev Override</td>
               <td style="padding:7px 8px;color:#4A5568">dev@test.com</td>
               <td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">99999</span></td>
@@ -305,7 +291,15 @@ input,select,textarea{font-family:inherit}
             </tr>
           </tbody>
         </table>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #EAE4D8">
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #EAE4D8">
+          <label style="font-size:11px;font-weight:600;color:#4A5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Or sign in manually:</label>
+          <div class="form-group" style="margin-bottom:8px">
+            <input type="email" id="email" placeholder="you@example.com" style="font-size:13px;padding:8px 10px">
+          </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <input type="password" id="password" placeholder="••••••••" style="font-size:13px;padding:8px 10px">
+          </div>
+          <button class="btn-sm btn-outline btn-full" id="login-btn" style="margin-bottom:10px">Sign In (Dev Bypass)</button>
           <label style="font-size:11px;font-weight:600;color:#4A5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Or enter a MatterId directly:</label>
           <div style="display:flex;gap:6px">
             <input type="number" id="dev-matter-id" placeholder="e.g. 9827" style="flex:1;padding:7px 10px;border:1.5px solid #D9D1C0;border-radius:6px;font-size:13px;font-family:inherit">
@@ -538,8 +532,154 @@ function closeModal() {
 }
 
 // ── AUTH ───────────────────────────────────────────────
+// currentUser shape: { profile: {name, initials, email, caseNumber},
+//                       matters: [...], activeMatter: {matterId, caseNumber, caseTitle, homeFolderId} }
 var currentUser = null;
 
+// Real entry point — triggered by the "Sign In with ShareFile" button.
+// Redirects to ShareFile; the rest of the flow resumes in sfHandleStartup()
+// after the OAuth redirect comes back.
+function handleShareFileLogin() {
+  SF.redirectToAuth();
+}
+
+// After ShareFile OAuth completes, resolve who logged in and which
+// matter(s) they have access to, then boot the portal accordingly.
+function resolveShareFileSession(onDone) {
+  SF.get('/Users(me)', function(err, profile) {
+    if (err) {
+      showToast('Could not retrieve your ShareFile profile: ' + err, 'error');
+      if (onDone) onDone(false);
+      return;
+    }
+
+    var email = profile.Email || profile.email;
+    var name  = ((profile.FirstName || '') + ' ' + (profile.LastName || '')).trim() || email;
+    var initials = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+
+    fetchMatterLookup(email, function(lookupErr, matters) {
+      if (lookupErr) {
+        showToast('Could not look up your case: ' + lookupErr, 'error');
+        if (onDone) onDone(false);
+        return;
+      }
+
+      if (!matters.length) {
+        showNoMatterFoundScreen(email);
+        if (onDone) onDone(false);
+        return;
+      }
+
+      var sessionProfile = { name: name, initials: initials, email: email };
+
+      if (matters.length === 1) {
+        bootPortal(sessionProfile, matters, matters[0]);
+      } else {
+        // Stash profile + matter list, show picker — client chooses before boot
+        currentUser = { profile: sessionProfile, matters: matters, activeMatter: null };
+        try { sessionStorage.setItem('portal_session', JSON.stringify(currentUser)); } catch(e) {}
+        showMatterPicker();
+      }
+      if (onDone) onDone(true);
+    });
+  });
+}
+
+function showNoMatterFoundScreen(email) {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('portal-layout').classList.add('hidden');
+  var err = document.getElementById('login-error');
+  err.innerHTML = 'We couldn\'t find a case linked to <strong>' + email + '</strong>. '
+    + 'Please contact our office so we can confirm your ShareFile account is connected to your case.';
+  err.classList.remove('hidden');
+}
+
+// ── MATTER PICKER — shown when a client has 2+ matters ─
+function showMatterPicker() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-layout').classList.add('hidden');
+
+  var existing = document.getElementById('matter-picker-screen');
+  if (existing) existing.remove();
+
+  var matters = (currentUser && currentUser.matters) || [];
+  var cardsHtml = matters.map(function(m, idx) {
+    return '<div class="matter-picker-card" data-idx="' + idx + '" style="cursor:pointer;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;background:#fff;transition:border-color .15s,box-shadow .15s;margin-bottom:12px">'
+      + '<div style="font-family:var(--font-d);font-size:17px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
+      + '<div style="font-size:13px;color:var(--text-muted);margin-top:4px">' + (m.caseNumber || '') + '</div>'
+      + '<div style="margin-top:10px;font-size:12.5px;color:var(--gold-muted);font-weight:600">Open this case &#8594;</div>'
+      + '</div>';
+  }).join('');
+
+  var screen = document.createElement('div');
+  screen.id = 'matter-picker-screen';
+  screen.className = 'login-screen';
+  screen.innerHTML =
+    '<div class="login-card" style="max-width:480px">'
+    + '<div class="login-logo"><div class="logo-mark">M&amp;T</div>'
+    + '<div class="login-firm-name"><span class="firm-name-main">Meriwether &amp; Tharp</span>'
+    + '<span class="firm-name-sub">Client Portal</span></div></div>'
+    + '<h1 class="login-heading">Select Your Case</h1>'
+    + '<p class="login-subheading">Your ShareFile account is linked to more than one case. Choose which one to open.</p>'
+    + '<div id="matter-picker-list">' + cardsHtml + '</div>'
+    + '<button class="btn-sm btn-outline btn-full" id="matter-picker-logout" style="margin-top:8px">Sign Out</button>'
+    + '</div><div class="login-bg"></div>';
+  document.body.appendChild(screen);
+
+  screen.querySelectorAll('.matter-picker-card').forEach(function(card) {
+    card.addEventListener('mouseenter', function(){ this.style.borderColor = 'var(--gold)'; this.style.boxShadow = 'var(--shadow)'; });
+    card.addEventListener('mouseleave', function(){ this.style.borderColor = 'var(--border)'; this.style.boxShadow = 'none'; });
+    card.addEventListener('click', function() {
+      var matter = currentUser.matters[parseInt(this.dataset.idx, 10)];
+      screen.remove();
+      bootPortal(currentUser.profile, currentUser.matters, matter);
+    });
+  });
+  document.getElementById('matter-picker-logout').addEventListener('click', function() {
+    screen.remove();
+    handleLogout();
+  });
+}
+
+// Boots the dashboard for a given matter. profile = {name, initials, email},
+// matters = full list (kept so the top-bar switcher can reopen the picker
+// without another Logic App call), activeMatter = the one chosen/resolved.
+function bootPortal(profile, matters, activeMatter) {
+  currentUser = { profile: profile, matters: matters, activeMatter: activeMatter };
+  API_CONFIG.matterId = activeMatter.matterId;
+  clearCaches();
+
+  try { sessionStorage.setItem('portal_session', JSON.stringify(currentUser)); } catch(e) {}
+
+  document.getElementById('user-name').textContent        = profile.name;
+  document.getElementById('user-case').textContent        = activeMatter.caseNumber || '';
+  document.getElementById('user-avatar').textContent      = profile.initials;
+  document.getElementById('topbar-matter-id').textContent = activeMatter.matterId;
+
+  var picker = document.getElementById('matter-picker-screen');
+  if (picker) picker.remove();
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-layout').classList.remove('hidden');
+  navigate('home');
+}
+
+function handleLogout() {
+  currentUser = null;
+  API_CONFIG.matterId = null;
+  clearCaches();
+  SF.clearTokens();
+  try { sessionStorage.removeItem('portal_session'); } catch(e) {}
+  var picker = document.getElementById('matter-picker-screen');
+  if (picker) picker.remove();
+  document.getElementById('portal-layout').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('email').value    = '';
+  document.getElementById('password').value = '';
+}
+
+// ── DEV BYPASS — test accounts panel, local testing only ──
+// Builds the same currentUser shape as the real ShareFile flow so the
+// rest of the portal behaves identically regardless of login path.
 function handleLogin() {
   var email = document.getElementById('email').value.trim().toLowerCase();
   var pass  = document.getElementById('password').value;
@@ -551,7 +691,6 @@ function handleLogin() {
     return;
   }
 
-  // Look up test account by email + password
   var account = null;
   for (var i = 0; i < TEST_ACCOUNTS.length; i++) {
     if (TEST_ACCOUNTS[i].email.toLowerCase() === email && TEST_ACCOUNTS[i].password === pass) {
@@ -567,49 +706,59 @@ function handleLogin() {
   }
 
   err.classList.add('hidden');
-  bootPortal(account);
+  var profile = { name: account.name, initials: account.initials, email: account.email };
+
+  if (account.matters.length === 1) {
+    bootPortal(profile, account.matters, account.matters[0]);
+  } else {
+    currentUser = { profile: profile, matters: account.matters, activeMatter: null };
+    try { sessionStorage.setItem('portal_session', JSON.stringify(currentUser)); } catch(e) {}
+    showMatterPicker();
+  }
 }
 
-function bootPortal(account) {
-  currentUser = account;
-  API_CONFIG.matterId = account.matterId;
-  clearCaches();
-
-  // Persist session so we can restore it after a ShareFile OAuth redirect
-  try { sessionStorage.setItem('portal_session', JSON.stringify(account)); } catch(e) {}
-
-  document.getElementById('user-name').textContent        = account.name;
-  document.getElementById('user-case').textContent        = account.caseNumber;
-  document.getElementById('user-avatar').textContent      = account.initials;
-  document.getElementById('topbar-matter-id').textContent = account.matterId;
-
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('portal-layout').classList.remove('hidden');
-  navigate('home');
-}
-
-function handleLogout() {
-  currentUser = null;
-  API_CONFIG.matterId = null;
-  clearCaches();
-  SF.clearTokens();
-  try { sessionStorage.removeItem('portal_session'); } catch(e) {}
-  document.getElementById('portal-layout').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('email').value    = '';
-  document.getElementById('password').value = '';
-}
-
-// Switch MatterId mid-session without logging out
+// Switch matters mid-session without logging out — reopens the picker using
+// the already-fetched matters list (no extra Logic App call needed).
 function switchMatterId(newId) {
+  // Dev-only direct override (used by the "Go" matter-id box on the dev panel)
   var id = parseInt(newId, 10);
   if (!id || isNaN(id)) { showToast('Enter a valid MatterId number.', 'error'); return; }
   API_CONFIG.matterId = id;
   clearCaches();
   document.getElementById('topbar-matter-id').textContent = id;
-  if (currentUser) currentUser.matterId = id;
+  if (currentUser && currentUser.activeMatter) currentUser.activeMatter.matterId = id;
   showToast('MatterId switched to ' + id + '. Reloading current page...', 'success');
-  setTimeout(function(){ navigate(pages[Object.keys(pages).find(function(k){ return document.querySelector('.nav-item.active') && document.querySelector('.nav-item.active').dataset.page === k; }) || 'home']); navigate('calendar'); }, 800);
+  setTimeout(function(){ navigate('home'); }, 800);
+}
+
+// Real matter switcher — called from the top-bar "Matter:" badge.
+// Re-shows the picker UI inline (not the full-screen version) using the
+// matters already fetched at login.
+function openMatterSwitcher() {
+  if (!currentUser || !currentUser.matters || currentUser.matters.length < 2) {
+    showToast('Your account is only linked to one case.', '');
+    return;
+  }
+  var matters = currentUser.matters;
+  openModal('Switch Case',
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Choose which case to view.</p>'
+    + matters.map(function(m, idx) {
+        var isActive = currentUser.activeMatter && currentUser.activeMatter.matterId === m.matterId;
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);cursor:pointer" data-switchidx="' + idx + '">'
+          + '<div><div style="font-size:13.5px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-muted)">' + (m.caseNumber || '') + '</div></div>'
+          + (isActive ? '<span class="badge badge-success">Current</span>' : '<span style="color:var(--gold-muted);font-size:12px;font-weight:600">Open &#8594;</span>')
+          + '</div>';
+      }).join(''),
+    '<button class="btn-sm btn-outline" onclick="closeModal()">Cancel</button>'
+  );
+  document.querySelectorAll('[data-switchidx]').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var matter = matters[parseInt(this.dataset.switchidx, 10)];
+      closeModal();
+      bootPortal(currentUser.profile, currentUser.matters, matter);
+    });
+  });
 }
 
 // ── NAVIGATION ─────────────────────────────────────────
@@ -799,8 +948,15 @@ function renderDashboard(el) {
 // Add as many rows as you need. Password is always "test" for all of them.
 // In production, remove this block and replace handleLogin with real auth.
 var TEST_ACCOUNTS = [
-  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matterId:9827,  caseNumber:'Case #11114-2', homeFolderId: 'fo7ed4c8-20c0-4d6a-bc16-abbcfc128c6b' },
-  { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matterId:99999, caseNumber:'DEV-OVERRIDE',  homeFolderId: null  }
+  { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matters: [
+      { matterId:9827,  caseNumber:'Case #11114-2', caseTitle:'Test Case',      homeFolderId:'fo58f4d2-1fea-4843-9ed2-f563d92b9e71' },
+      { matterId:10285, caseNumber:'Case #11890-1', caseTitle:'Geller 2', homeFolderId:'fo090122-f433-481a-aea8-25a7cd29aa3d' }
+    ]
+  },
+  { name:'Dev Override',  initials:'DO', email:'dev@test.com',           password:'test', matters: [
+      { matterId:99999, caseNumber:'DEV-OVERRIDE', caseTitle:'Dev Override', homeFolderId:null }
+    ]
+  }
 ];
 
 // ── API CONFIGURATION ──────────────────────────────────
@@ -819,6 +975,13 @@ var API_CONFIG = {
 
   // Logic App: Marital Balance Sheet
   mbsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
+
+  // Logic App: Matter Lookup by ShareFile login email.
+  // Input:  { "email": "client@example.com" }
+  // Output: { "matters": [ { "matterId": 9827, "caseNumber": "11114-2", "caseTitle": "Geller v. Geller", "homeFolderId": "fo5e0e87-..." }, ... ] }
+  // An empty "matters" array means no Aderant matter is linked to this email —
+  // the portal shows a "contact our office" message rather than granting access.
+  matterLookupUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-LOOKUP-SIG',
 
   // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
   //
@@ -858,9 +1021,9 @@ var API_CONFIG = {
 
   // Client document uploads — the portal NEVER creates folders here.
   // It discovers whatever subfolders already exist inside the templated
-  // "4. CLIENT'S DOCUMENT UPLOADS" folder (or close variant) and builds the
-  // checklist + progress bar entirely from that live ShareFile structure.
-  clientUploadsFolderPrefixes: ["4. client's document uploads", '4. clients document uploads'],
+  // "CLIENT UPLOADS" folder and builds the checklist + progress bar
+  // entirely from that live ShareFile structure.
+  clientUploadsFolderPrefixes: ['client uploads'],
 
   // Bookings map loaded at startup from bookings-config.json — do not edit here
   staffBookingsMap: {},
@@ -910,7 +1073,7 @@ function fetchCaseInfo(matterId, callback) {
     var mock = {
       matterId: matterId,
       caseTitle: 'Geller v. Geller',
-      clientName: (currentUser && currentUser.name) || 'Client',
+      clientName: (currentUser && currentUser.profile && currentUser.profile.name) || 'Client',
       staff: [
         { name: 'Robert Tharp', role: 'Lead Attorney', email: 'rtharp@mtlawoffice.com' },
         { name: 'Jane Smith',   role: 'Paralegal',     email: 'jsmith@mtlawoffice.com' }
@@ -1823,6 +1986,46 @@ function truncate(str, max) {
   return str.length > max ? str.slice(0, max).trimEnd() + '\u2026' : str;
 }
 
+// ── MATTER LOOKUP (ShareFile email → Aderant matters) ──
+// Called once right after ShareFile OAuth completes. Maps the authenticated
+// ShareFile user's email to whichever Aderant matter(s) list that email as
+// the client's ShareFile login. Returns an array — empty if no match,
+// one entry for a single matter, multiple if the client has more than one
+// active matter sharing the same ShareFile login.
+function fetchMatterLookup(email, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', API_CONFIG.matterLookupUrl, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 15000;
+
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var matters = Array.isArray(data) ? data : (data.matters || []);
+        callback(null, matters);
+      } catch(e) {
+        callback('Could not parse matter lookup response.');
+      }
+    } else {
+      callback('Matter lookup returned status ' + xhr.status);
+    }
+  };
+
+  xhr.onerror = function() {
+    console.warn('[Matter Lookup] Network error — using mock matter data for development.');
+    // Mock: pretend this ShareFile email maps to Rachel Geller's matter.
+    // Replace by wiring up the real Logic App URL above.
+    var mock = [
+      { matterId: 9827, caseNumber: 'Case #11114-2', caseTitle: 'Geller v. Geller', homeFolderId: 'fo7ed4c8-20c0-4d6a-bc16-abbcfc128c6b' }
+    ];
+    callback(null, mock);
+  };
+
+  xhr.ontimeout = function() { callback('Matter lookup request timed out.'); };
+  xhr.send(JSON.stringify({ email: email }));
+}
+
 // ── MARITAL BALANCE SHEET ──────────────────────────────
 
 // Ownership / Separate Property picklist codes
@@ -2534,31 +2737,31 @@ var SF = {
   },
 
   // Resolve the client's matter root folder.
-  // Priority: 1) homeFolderId set on the account by staff
-  //           2) Authenticated user's ShareFile home folder
+  // Priority: 1) homeFolderId on the currently active matter
+  //           2) homeFolderId recovered from the saved session (race condition guard)
   getMatterFolderId: function(matterId, callback) {
     var cacheKey = 'matterFolder_' + matterId;
     if (SF[cacheKey]) { callback(null, SF[cacheKey]); return; }
 
-    // Use the folder ID configured on the account by staff
-    var accountFolderId = currentUser && currentUser.homeFolderId;
+    // Use the folder ID on the currently active matter
+    var accountFolderId = currentUser && currentUser.activeMatter && currentUser.activeMatter.homeFolderId;
     if (accountFolderId) {
       SF[cacheKey] = accountFolderId;
       callback(null, accountFolderId);
       return;
     }
 
-    // Try to recover homeFolderId from sessionStorage in case currentUser
-    // wasn't fully restored before this call (race condition after OAuth redirect)
+    // Try to recover from sessionStorage in case currentUser wasn't fully
+    // restored before this call (race condition right after OAuth redirect)
     try {
       var saved = sessionStorage.getItem('portal_session');
       if (saved) {
-        var account = JSON.parse(saved);
-        if (account && account.homeFolderId) {
-          // Patch currentUser so subsequent calls don't repeat this
-          if (currentUser) currentUser.homeFolderId = account.homeFolderId;
-          SF[cacheKey] = account.homeFolderId;
-          callback(null, account.homeFolderId);
+        var restored = JSON.parse(saved);
+        var folderId = restored && restored.activeMatter && restored.activeMatter.homeFolderId;
+        if (folderId) {
+          if (currentUser && currentUser.activeMatter) currentUser.activeMatter.homeFolderId = folderId;
+          SF[cacheKey] = folderId;
+          callback(null, folderId);
           return;
         }
       }
@@ -2566,10 +2769,9 @@ var SF = {
 
     // No folder ID available — give a clear actionable message
     callback(
-      'No ShareFile folder configured for this account. '
-      + 'Add homeFolderId to this client\'s entry in TEST_ACCOUNTS. '
-      + 'Find the folder ID in ShareFile by navigating to the client\'s folder '
-      + 'and copying the ID from the URL (format: fo########-####-####-####-############).'
+      'No ShareFile folder is configured for this matter. '
+      + 'Confirm the Aderant matter lookup is returning a homeFolderId, '
+      + 'or (for dev testing) add homeFolderId to this matter\'s entry under TEST_ACCOUNTS.'
     );
   },
 
@@ -2631,41 +2833,63 @@ var SF = {
 // ── FILE MANAGER PAGE ──────────────────────────────────
 var FileCache = { folders: {}, files: {}, matterFolderId: null, matterId: null };
 
-// Called once at startup to handle the OAuth redirect callback
+// Called once at startup. Two cases:
+// 1. Returning from a ShareFile OAuth redirect (justAuthed=true) — resolve
+//    the session fresh via Users(me) + the Aderant matter lookup.
+// 2. Plain page load/refresh with a still-valid token — restore the
+//    previously resolved session from sessionStorage without re-calling
+//    the Logic App (the matter list hasn't changed mid-session).
 function sfHandleStartup(onDone) {
   SF.loadStoredTokens();
 
-  // Restore portal login session that was saved before the ShareFile redirect
-  function restoreSession() {
-    if (currentUser) return; // already logged in (normal page load)
+  function restoreSavedSession() {
+    if (currentUser) return true; // already booted (e.g. dev bypass)
     try {
       var saved = sessionStorage.getItem('portal_session');
-      if (!saved) return;
-      var account = JSON.parse(saved);
-      // Silently re-boot the portal without clearing the saved session
-      currentUser = account;
-      API_CONFIG.matterId = account.matterId;
-      document.getElementById('user-name').textContent        = account.name;
-      document.getElementById('user-case').textContent        = account.caseNumber;
-      document.getElementById('user-avatar').textContent      = account.initials;
-      document.getElementById('topbar-matter-id').textContent = account.matterId;
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('portal-layout').classList.remove('hidden');
-    } catch(e) {}
+      if (!saved) return false;
+      var restored = JSON.parse(saved);
+      if (!restored || !restored.profile) return false;
+
+      if (restored.activeMatter) {
+        bootPortal(restored.profile, restored.matters, restored.activeMatter);
+      } else if (restored.matters && restored.matters.length > 1) {
+        currentUser = restored;
+        showMatterPicker();
+      } else {
+        return false;
+      }
+      return true;
+    } catch(e) { return false; }
   }
 
   SF.handleCallback(function(err, justAuthed) {
     if (err) {
-      // Restore session even on error so the client isn't stranded at login
-      restoreSession();
+      restoreSavedSession();
       showToast('ShareFile: ' + err, 'error');
       if (onDone) onDone(false);
       return;
     }
+
     if (justAuthed) {
-      restoreSession(); // restore BEFORE calling onDone so navigate() works
+      // Fresh OAuth completion — resolve identity + matters from scratch
+      resolveShareFileSession(function(ok) {
+        if (onDone) onDone(ok);
+      });
+      return;
     }
-    if (onDone) onDone(justAuthed);
+
+    // Plain page load — try to restore a still-valid session silently.
+    // If SF is authenticated but we have no saved session (e.g. cleared
+    // sessionStorage), resolve fresh rather than stranding the client.
+    if (restoreSavedSession()) {
+      if (onDone) onDone(false);
+    } else if (SF.isAuthenticated()) {
+      resolveShareFileSession(function(ok) {
+        if (onDone) onDone(ok);
+      });
+    } else {
+      if (onDone) onDone(false);
+    }
   });
 }
 
@@ -2772,8 +2996,7 @@ function renderFirmDocuments(el) {
 
       // Case Documents is templated directly in ShareFile by staff — the portal
       // only looks it up, it never creates this folder or its subfolders.
-      // Matches "3. CASE DOCUMENTS" and "3. CASE DOCUMENTS (Read Only)" variants.
-      SF.findFolderByPrefix(matterFolderId, ['3. case documents'], function(cdErr, caseDocsFolderId, actualName) {
+      SF.findFolderByPrefix(matterFolderId, ['case documents'], function(cdErr, caseDocsFolderId, actualName) {
         if (cdErr) {
           bodyEl.innerHTML = '<div class="card"><div class="card-body">'
             + emptyState('&#128193;', 'No case documents yet', 'Documents your attorney prepares — drafts, filings, court orders, and correspondence — will appear here once your legal team adds them.')
@@ -3350,8 +3573,12 @@ function renderSettings(el) {
 }
 
 // ── WIRE EVENTS ────────────────────────────────────────
+document.getElementById('sf-login-btn').addEventListener('click', handleShareFileLogin);
+document.getElementById('sf-forgot-link').addEventListener('click', function(e){
+  e.preventDefault();
+  window.open('https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/forgotpassword.aspx', '_blank', 'noopener,noreferrer');
+});
 document.getElementById('login-btn').addEventListener('click', handleLogin);
-document.getElementById('azure-btn').addEventListener('click', function(){ showToast('Azure SSO: configure MSAL credentials to enable',''); });
 document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
 document.getElementById('email').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('password').focus(); });
 document.getElementById('collapse-btn').addEventListener('click', toggleSidebar);
@@ -3367,12 +3594,13 @@ document.querySelector('.sidebar-nav').addEventListener('click', function(e){
 // Load external bookings config on startup
 loadBookingsConfig();
 
-// Handle ShareFile OAuth callback if returning from auth redirect.
-// Runs before anything else so the ?code= param is processed immediately.
+// Handle ShareFile OAuth callback if returning from auth redirect, and
+// resolve/restore the client's session (matter lookup or saved session).
+// bootPortal() (called inside sfHandleStartup) already navigates to the
+// dashboard, so this callback only needs to surface a success toast.
 sfHandleStartup(function(justAuthed) {
-  if (justAuthed && currentUser) {
+  if (justAuthed && currentUser && currentUser.activeMatter) {
     showToast('Connected to ShareFile successfully.', 'success');
-    navigate('clientuploads');
   }
 });
 
@@ -3393,10 +3621,12 @@ document.getElementById('dev-panel-toggle').addEventListener('click', function()
   TEST_ACCOUNTS.forEach(function(acct) {
     var tr = document.createElement('tr');
     tr.style.cssText = 'cursor:pointer;border-bottom:1px solid #EAE4D8';
+    var matterIdsLabel = acct.matters.map(function(m){ return m.matterId; }).join(', ');
+    var caseNumLabel   = acct.matters.map(function(m){ return m.caseNumber; }).join(' / ');
     tr.innerHTML = '<td style="padding:7px 8px;font-weight:500;color:#1B2A4A">' + acct.name + '</td>'
       + '<td style="padding:7px 8px;color:#4A5568">' + acct.email + '</td>'
-      + '<td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + acct.matterId + '</span></td>'
-      + '<td style="padding:7px 8px;color:#6B7280;font-size:11.5px">' + acct.caseNumber + '</td>';
+      + '<td style="padding:7px 8px"><span style="background:#1B2A4A;color:#C9A84C;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + matterIdsLabel + '</span></td>'
+      + '<td style="padding:7px 8px;color:#6B7280;font-size:11.5px">' + caseNumLabel + '</td>';
     tr.addEventListener('mouseenter', function(){ this.style.background='#FFF8E8'; });
     tr.addEventListener('mouseleave', function(){ this.style.background=''; });
     tr.addEventListener('click', function(){
@@ -3423,15 +3653,10 @@ function showDevHint(msg) {
 document.getElementById('dev-matter-go').addEventListener('click', function(){
   var id = parseInt(document.getElementById('dev-matter-id').value, 10);
   if (!id || isNaN(id)) { showToast('Enter a valid MatterId number.', 'error'); return; }
-  // Log in as Dev Override account with the specified MatterId
-  var devAcct = Object.assign({}, TEST_ACCOUNTS[TEST_ACCOUNTS.length - 1]);
-  devAcct.matterId    = id;
-  devAcct.caseNumber  = 'MatterId: ' + id;
-  devAcct.name        = 'Dev User (' + id + ')';
-  devAcct.initials    = 'DV';
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('portal-layout').classList.remove('hidden');
-  bootPortal(devAcct);
+  // Boot directly into a dev override matter with the specified MatterId
+  var devProfile = { name: 'Dev User (' + id + ')', initials: 'DV', email: 'dev@test.com' };
+  var devMatter  = { matterId: id, caseNumber: 'MatterId: ' + id, caseTitle: 'Dev User (' + id + ')', homeFolderId: null };
+  bootPortal(devProfile, [devMatter], devMatter);
 });
 document.getElementById('dev-matter-id').addEventListener('keydown', function(e){
   if (e.key === 'Enter') document.getElementById('dev-matter-go').click();
@@ -3439,15 +3664,26 @@ document.getElementById('dev-matter-id').addEventListener('keydown', function(e)
 
 // ── TOP BAR MATTER SWITCHER ────────────────────────────
 document.getElementById('matter-id-badge').addEventListener('click', function(){
-  openModal('Switch MatterId',
+  // Real flow: client has 2+ matters linked to their ShareFile login — show the real picker
+  if (currentUser && currentUser.matters && currentUser.matters.length > 1) {
+    openMatterSwitcher();
+    return;
+  }
+  // Dev/testing fallback: manual MatterId override + flattened matter picker
+  var allMatters = [];
+  TEST_ACCOUNTS.forEach(function(a){
+    a.matters.forEach(function(m){ allMatters.push({ accountName: a.name, matter: m }); });
+  });
+  openModal('Switch MatterId (Dev)',
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Change the active MatterId to pull different case data without logging out. The appointment cache will be cleared.</p>'
     + '<div class="form-group"><label>New MatterId</label>'
     + '<input type="number" id="switch-matter-input" placeholder="e.g. 23456" value="' + (API_CONFIG.matterId || '') + '"></div>'
-    + '<div style="margin-top:4px"><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Or pick a test account:</p>'
-    + TEST_ACCOUNTS.map(function(a){
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);cursor:pointer" onclick="document.getElementById(\'switch-matter-input\').value=' + a.matterId + '">'
-          + '<span style="font-size:13px">' + a.name + ' <span style="color:var(--text-muted);font-size:11.5px">(' + a.caseNumber + ')</span></span>'
-          + '<span style="background:var(--navy);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + a.matterId + '</span></div>';
+    + '<div style="margin-top:4px"><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Or pick a test matter:</p>'
+    + allMatters.map(function(entry){
+        var m = entry.matter;
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);cursor:pointer" onclick="document.getElementById(\'switch-matter-input\').value=' + m.matterId + '">'
+          + '<span style="font-size:13px">' + entry.accountName + ' <span style="color:var(--text-muted);font-size:11.5px">(' + m.caseNumber + ')</span></span>'
+          + '<span style="background:var(--navy);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">' + m.matterId + '</span></div>';
       }).join('')
     + '</div>',
     '<button class="btn-sm btn-outline" onclick="closeModal()">Cancel</button>'
