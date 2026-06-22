@@ -960,28 +960,35 @@ var TEST_ACCOUNTS = [
 ];
 
 // ── API CONFIGURATION ──────────────────────────────────
+// All Logic App URLs (and the ShareFile proxy URL) are loaded from config.js,
+// which is gitignored and never committed — see README. Each contains a
+// signed query string (?sig=...) that grants invocation access, so none of
+// these can live in this file once it's pushed to a public repo.
+// config.js sets window.MT_CONFIG.logicApps.{name} before this script runs.
+var MT_LOGIC_APPS = (window.MT_CONFIG && window.MT_CONFIG.logicApps) || {};
+
 var API_CONFIG = {
   // Logic App: Appointments
-  appointmentsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-APPT-SIG',
+  appointmentsUrl: MT_LOGIC_APPS.appointmentsUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-APPT-SIG',
 
   // Logic App: Case / Staff
-  caseUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-CASE-SIG',
+  caseUrl: MT_LOGIC_APPS.caseUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-CASE-SIG',
 
   // Logic App: Case Tasks
-  tasksUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-TASKS-SIG',
+  tasksUrl: MT_LOGIC_APPS.tasksUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-TASKS-SIG',
 
   // Logic App: Legal Issues
-  issuesUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-ISSUES-SIG',
+  issuesUrl: MT_LOGIC_APPS.issuesUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-ISSUES-SIG',
 
   // Logic App: Marital Balance Sheet
-  mbsUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
+  mbsUrl: MT_LOGIC_APPS.mbsUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MBS-SIG',
 
   // Logic App: Matter Lookup by ShareFile login email.
   // Input:  { "email": "client@example.com" }
   // Output: { "matters": [ { "matterId": 9827, "caseTitle": "Geller v. Geller", "homeFolderId": "fo5e0e87-..." }, ... ] }
   // An empty "matters" array means no Aderant matter is linked to this email —
   // the portal shows a "contact our office" message rather than granting access.
-  matterLookupUrl: 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-MATTERLOOKUP-SIG',
+  matterLookupUrl: MT_LOGIC_APPS.matterLookupUrl || 'https://YOUR-LOGIC-APP-URL/triggers/When_an_HTTP_request_is_received/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=YOUR-LOOKUP-SIG',
 
   // ── ShareFile (Authorization Code / OAuth2 PKCE) ──────
   //
