@@ -238,7 +238,7 @@ input,select,textarea{font-family:inherit}
 <body>
 
 <div id="login-screen" class="login-screen">
-  <div class="login-card">
+  <div class="login-card" id="login-card-main">
     <div class="login-logo">
       <div class="logo-mark">M&amp;T</div>
       <div class="login-firm-name">
@@ -311,6 +311,18 @@ input,select,textarea{font-family:inherit}
     <!-- END DEV PANEL -->
 
   </div>
+
+  <!-- Loading overlay — shown while resolving the session after ShareFile OAuth returns -->
+  <div id="login-loading-card" class="login-card hidden" style="text-align:center;position:absolute">
+    <div style="font-size:36px;margin-bottom:18px">&#8987;</div>
+    <h1 class="login-heading" style="font-size:20px">Connecting to your case...</h1>
+    <p class="login-subheading" id="login-loading-detail">Verifying your ShareFile account.</p>
+    <div style="margin-top:8px;height:4px;background:var(--border-light);border-radius:2px;overflow:hidden">
+      <div style="height:100%;width:40%;background:var(--gold);border-radius:2px;animation:loadingBar 1.4s ease-in-out infinite"></div>
+    </div>
+  </div>
+  <style>@keyframes loadingBar{0%{margin-left:-40%}100%{margin-left:100%}}</style>
+
   <div class="login-bg"></div>
 </div>
 
@@ -536,6 +548,26 @@ function closeModal() {
 //                       matters: [...], activeMatter: {matterId, caseTitle, homeFolderId} }
 var currentUser = null;
 
+// Show/hide the "Connecting to your case..." overlay during post-OAuth
+// resolution, so the login screen doesn't look frozen during a slow
+// Logic App response.
+function showLoginLoading(detailText) {
+  var main = document.getElementById('login-card-main');
+  var loading = document.getElementById('login-loading-card');
+  if (main) main.classList.add('hidden');
+  if (loading) {
+    loading.classList.remove('hidden');
+    var detail = document.getElementById('login-loading-detail');
+    if (detail && detailText) detail.textContent = detailText;
+  }
+}
+function hideLoginLoading() {
+  var main = document.getElementById('login-card-main');
+  var loading = document.getElementById('login-loading-card');
+  if (loading) loading.classList.add('hidden');
+  if (main) main.classList.remove('hidden');
+}
+
 // Real entry point — triggered by the "Sign In with ShareFile" button.
 // Redirects to ShareFile; the rest of the flow resumes in sfHandleStartup()
 // after the OAuth redirect comes back.
@@ -546,8 +578,11 @@ function handleShareFileLogin() {
 // After ShareFile OAuth completes, resolve who logged in and which
 // matter(s) they have access to, then boot the portal accordingly.
 function resolveShareFileSession(onDone) {
+  showLoginLoading('Verifying your ShareFile account...');
+
   SF.get('/Users', function(err, data) {
     if (err) {
+      hideLoginLoading();
       showToast('Could not retrieve your ShareFile profile: ' + err, 'error');
       if (onDone) onDone(false);
       return;
@@ -566,6 +601,7 @@ function resolveShareFileSession(onDone) {
     }
 
     if (!profile) {
+      hideLoginLoading();
       showToast('ShareFile did not return a recognizable user profile. Check the console for the raw response.', 'error');
       if (onDone) onDone(false);
       return;
@@ -573,6 +609,7 @@ function resolveShareFileSession(onDone) {
 
     var email = profile.Email || profile.email;
     if (!email) {
+      hideLoginLoading();
       showToast('ShareFile profile did not include an email address. Check the console for the raw response.', 'error');
       if (onDone) onDone(false);
       return;
@@ -581,14 +618,18 @@ function resolveShareFileSession(onDone) {
     var name  = ((profile.FirstName || '') + ' ' + (profile.LastName || '')).trim() || email;
     var initials = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
 
+    showLoginLoading('Looking up your case in our system...');
+
     fetchMatterLookup(email, function(lookupErr, matters) {
       if (lookupErr) {
+        hideLoginLoading();
         showToast('Could not look up your case: ' + lookupErr, 'error');
         if (onDone) onDone(false);
         return;
       }
 
       if (!matters.length) {
+        hideLoginLoading();
         showNoMatterFoundScreen(email);
         if (onDone) onDone(false);
         return;
@@ -597,11 +638,13 @@ function resolveShareFileSession(onDone) {
       var sessionProfile = { name: name, initials: initials, email: email };
 
       if (matters.length === 1) {
+        showLoginLoading('Opening your case...');
         bootPortal(sessionProfile, matters, matters[0]);
       } else {
         // Stash profile + matter list, show picker — client chooses before boot
         currentUser = { profile: sessionProfile, matters: matters, activeMatter: null };
         try { sessionStorage.setItem('portal_session', JSON.stringify(currentUser)); } catch(e) {}
+        hideLoginLoading();
         showMatterPicker();
       }
       if (onDone) onDone(true);
@@ -697,6 +740,7 @@ function handleLogout() {
   if (picker) picker.remove();
   document.getElementById('portal-layout').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
+  hideLoginLoading();
   document.getElementById('email').value    = '';
   document.getElementById('password').value = '';
 }
@@ -2629,7 +2673,19 @@ var SF = {
   redirectToAuth: function() {
     // Store current portal page so we return to it after OAuth
     try { sessionStorage.setItem('sf_auth_return', window.location.href); } catch(e) {}
-    window.location.href = SF.authorizeUrl();
+
+    var url = SF.authorizeUrl();
+    console.log('[ShareFile] Redirecting to authorize URL:', url);
+    console.log('[ShareFile] clientId being used:', API_CONFIG.shareFile.clientId);
+    console.log('[ShareFile] redirectUri being used:', API_CONFIG.shareFile.redirectUri);
+
+    if (!API_CONFIG.shareFile.clientId || API_CONFIG.shareFile.clientId === 'YOUR-SF-CLIENT-ID') {
+      console.error('[ShareFile] clientId is missing or still the placeholder — config.js is not loaded or shareFile.clientId is not set.');
+      showToast('ShareFile clientId is not configured. Check config.js.', 'error');
+      return;
+    }
+
+    window.location.href = url;
   },
 
   // ── Handle OAuth callback (?code=... in URL) ────────
