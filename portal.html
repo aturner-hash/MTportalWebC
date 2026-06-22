@@ -1019,7 +1019,8 @@ var API_CONFIG = {
   // SETUP — three steps, done once:
   // 1. In ShareFile Admin > Settings > OAuth2 > Allowed Domains  add your portal domain
   // 2. In your OAuth app registration set Redirect URI to exactly:  [your portal URL]/   (the page itself)
-  // 3. Fill in subdomain, clientId, clientSecret, and redirectUri below
+  // 3. Fill in subdomain below, and clientId/clientSecret/redirectUri in config.js
+  //    (clientId and clientSecret are NEVER stored in this file — see config.js)
   //
   // HOW IT WORKS:
   // Client clicks "Connect to ShareFile" → redirected to ShareFile login → ShareFile sends
@@ -1031,8 +1032,10 @@ var API_CONFIG = {
   //   b) Leave null and the portal uses the authenticated user's ShareFile home folder automatically
   shareFile: {
     subdomain:    'mtlawoffice',             // e.g. "meriwethertharp" from meriwethertharp.sharefile.com
-    clientId:     'YOUR-SF-CLIENT-ID',       // from your ShareFile OAuth app registration
-    clientSecret: 'YOUR-SF-CLIENT-SECRET',   // from your ShareFile OAuth app registration
+    // clientId, clientSecret, and redirectUri are loaded from config.js (gitignored, never
+    // committed) — see window.MT_CONFIG.shareFile in config.js. Never hardcode them here.
+    clientId:     (window.MT_CONFIG && window.MT_CONFIG.shareFile && window.MT_CONFIG.shareFile.clientId)     || 'YOUR-SF-CLIENT-ID',
+    clientSecret: (window.MT_CONFIG && window.MT_CONFIG.shareFile && window.MT_CONFIG.shareFile.clientSecret) || 'YOUR-SF-CLIENT-SECRET',
     // redirectUri MUST be the URL where your portal is served — not a ShareFile URL.
     // ShareFile sends the client back here with ?code=... after they log in.
     //
@@ -2567,6 +2570,9 @@ var SF = {
       + '&client_id='     + encodeURIComponent(cfg.clientId)
       + '&client_secret=' + encodeURIComponent(cfg.clientSecret)
       + '&redirect_uri='  + encodeURIComponent(cfg.redirectUri);
+    console.log('[ShareFile] Exchanging code:', code);
+    console.log('[ShareFile] redirect_uri being sent:', cfg.redirectUri);
+    console.log('[ShareFile] Full token request body:', body);
     SF._tokenRequest(body, callback);
   },
 
@@ -2593,7 +2599,8 @@ var SF = {
           callback(null, SF.token);
         } catch(e) { callback('ShareFile: could not parse token response.'); }
       } else {
-        callback('ShareFile token request failed (' + xhr.status + '). Check client ID, secret, and redirect URI.');
+        console.error('[ShareFile] Token request failed. Status:', xhr.status, 'Response:', xhr.responseText);
+        callback('ShareFile token request failed (' + xhr.status + '): ' + xhr.responseText);
       }
     };
     xhr.onerror   = function() { callback('ShareFile auth: network error. Ensure your domain is in ShareFile Allowed Domains.'); };
