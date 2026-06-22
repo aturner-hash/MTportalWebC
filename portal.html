@@ -489,6 +489,26 @@ function fileIcon(name) {
   var ext = name.split('.').pop().toLowerCase();
   return {pdf:'📄',docx:'📝',doc:'📝',xlsx:'📊',jpg:'🖼',png:'🖼',jpeg:'🖼'}[ext] || '📎';
 }
+
+// Natural sort — handles leading numbers correctly ("2. Foo" before "10. Bar"),
+// then falls back to plain alphabetical for the remainder. Case-insensitive.
+function naturalSort(a, b) {
+  var ax = [], bx = [];
+  String(a).replace(/(\d+)|(\D+)/g, function(_, num, str) {
+    ax.push([num ? parseInt(num, 10) : Infinity, str || '']);
+  });
+  String(b).replace(/(\d+)|(\D+)/g, function(_, num, str) {
+    bx.push([num ? parseInt(num, 10) : Infinity, str || '']);
+  });
+  while (ax.length && bx.length) {
+    var an = ax.shift(), bn = bx.shift();
+    var nn = an[0] - bn[0];
+    if (nn) return nn;
+    var sn = an[1].toLowerCase().localeCompare(bn[1].toLowerCase());
+    if (sn) return sn;
+  }
+  return ax.length - bx.length;
+}
 function badge(text, cls) { return '<span class="badge ' + cls + '">' + text + '</span>'; }
 function priorityBadge(p) {
   return badge(p, p==='high'?'badge-danger':p==='medium'?'badge-warning':'badge-neutral');
@@ -606,8 +626,6 @@ var pages = {
 
 function navigate(page) {
   if (!pages[page]) return;
-  // Reset checklist sub-state whenever Client Uploads is entered via main nav
-  if (page === 'clientuploads') { FilesNav.stageId = null; }
   document.querySelectorAll('.nav-item').forEach(function(el){
     el.classList.toggle('active', el.dataset.page === page);
   });
@@ -837,40 +855,11 @@ var API_CONFIG = {
     redirectUri: 'https://aturner-hash.github.io/MTportalWebC/portal.html'   // ← change to match your actual URL
   },
 
-  // Document checklists, grouped into stages of the case.
-  // Each stage becomes its own sub-page in File Manager.
-  // Category subfolders are created in ShareFile exactly as before — only the
-  // grouping/navigation changed, not the underlying ShareFile structure.
-  // Add new stages here as the case progresses (e.g. Discovery, Mediation Prep).
-  checklistStages: [
-    {
-      id: 'client-homework',
-      label: 'Items Needed From You',
-      icon: '📋',
-      description: 'Documents your attorney has requested directly from you.',
-      categories: [
-        { id: 'financial-affidavit',   label: 'Financial Affidavit',        accept: '.pdf,.docx',       required: true  },
-        { id: 'bank-statements',       label: 'Bank Statements',            accept: '.pdf,.xlsx,.csv',  required: true  },
-        { id: 'tax-returns',           label: 'Tax Returns (Last 3 Years)', accept: '.pdf',             required: true  },
-        { id: 'pay-stubs',             label: 'Pay Stubs',                  accept: '.pdf,.jpg,.png',   required: true  },
-        { id: 'retirement-statements', label: 'Retirement Statements',      accept: '.pdf',             required: false },
-        { id: 'property-documents',    label: 'Property Documents',        accept: '.pdf,.docx',       required: false },
-        { id: 'business-records',      label: 'Business Records',          accept: '.pdf,.xlsx,.docx', required: false },
-        { id: 'other',                 label: 'Other Documents',           accept: '*',                required: false }
-      ]
-    }
-    // Future stages — uncomment and fill in when ready, no other code changes needed:
-    // {
-    //   id: 'discovery',
-    //   label: 'Discovery',
-    //   icon: '🔍',
-    //   description: 'Documents related to formal discovery requests.',
-    //   categories: [
-    //     { id: 'interrogatory-responses', label: 'Interrogatory Responses', accept: '.pdf,.docx', required: true },
-    //     { id: 'document-production',     label: 'Document Production',     accept: '.pdf',        required: true }
-    //   ]
-    // }
-  ],
+  // Client document uploads — the portal NEVER creates folders here.
+  // It discovers whatever subfolders already exist inside the templated
+  // "4. CLIENT'S DOCUMENT UPLOADS" folder (or close variant) and builds the
+  // checklist + progress bar entirely from that live ShareFile structure.
+  clientUploadsFolderPrefixes: ["4. client's document uploads", '4. clients document uploads'],
 
   // Bookings map loaded at startup from bookings-config.json — do not edit here
   staffBookingsMap: {},
@@ -2680,13 +2669,6 @@ function sfHandleStartup(onDone) {
 }
 
 // ── FILE MANAGER NAVIGATION STATE ──────────────────────
-// Tracks which sub-view is showing inside the File Manager page:
-// 'home' = landing page with stage cards + collapsed sections
-// 'checklist' = focused single-stage checklist (stageId set)
-// ── FILE MANAGER NAVIGATION STATE ──────────────────────
-// Tracks which checklist stage is open when drilled into from Client Uploads.
-var FilesNav = { stageId: null };
-
 // Shared shell: page header + ShareFile auth check.
 // Calls onReady(bodyEl) once connected, or renders the connect screen / error.
 function renderShareFileShell(el, title, subtitle, onReady) {
@@ -2774,11 +2756,7 @@ function renderAllFilesPage(el) {
 // ── CLIENT UPLOADS PAGE ─────────────────────────────────
 function renderClientUploads(el) {
   var onReady = function(bodyEl, matterId) {
-    if (FilesNav.stageId) {
-      loadChecklistStage(bodyEl, matterId, FilesNav.stageId);
-    } else {
-      loadClientUploadsHome(bodyEl, matterId);
-    }
+    loadClientUploadsHome(bodyEl, matterId);
   };
   onReady.__rerender = renderClientUploads;
   renderShareFileShell(el, 'Client Uploads', 'Upload the documents your attorney has requested from you.', onReady);
@@ -2832,238 +2810,146 @@ function loadClientUploadsHome(bodyEl, matterId) {
       return;
     }
 
-    // Verify the folder actually exists and is accessible before rendering
-    SF.get('/Items(' + matterFolderId + ')?$select=Id,Name', function(verifyErr, folder) {
-      if (verifyErr) {
-        bodyEl.innerHTML = sfErrorHtml(
-          'Folder "' + matterFolderId + '" could not be accessed: ' + verifyErr
-          + '. Confirm this folder ID exists in ShareFile and the authenticated user has access to it.'
-        );
+    // Find the templated "4. CLIENT'S DOCUMENT UPLOADS" folder — never created by the portal.
+    SF.findFolderByPrefix(matterFolderId, API_CONFIG.clientUploadsFolderPrefixes, function(ufErr, uploadsFolderId, actualName) {
+      if (!bodyEl) return;
+
+      if (ufErr) {
+        bodyEl.innerHTML = '<div class="card"><div class="card-body">'
+          + emptyState('&#128193;', 'Document uploads not set up yet',
+              'The "4. Client\'s Document Uploads" folder could not be found for this matter. '
+              + 'Ask your attorney\'s office to confirm the ShareFile template has been applied.')
+          + '</div></div>';
         return;
       }
 
-      // Folder confirmed — build the UI
-      FileCache.matterFolderId = matterFolderId;
-      FileCache.rootFolderName = folder.Name || 'Case Files';
+      FileCache.uploadsFolderId = uploadsFolderId;
+      FileCache.uploadsFolderName = actualName;
       var refreshTime = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
 
-      // Flatten all categories across all stages — used for the overall progress bar
-      var allCategories = [];
-      API_CONFIG.checklistStages.forEach(function(stage) {
-        stage.categories.forEach(function(cat) { allCategories.push(cat); });
-      });
+      // Discover the real subfolders — these ARE the categories. Sorted numerically/alphabetically.
+      SF.listFolder(uploadsFolderId, function(listErr, items) {
+        if (!bodyEl) return;
+        if (listErr) { bodyEl.innerHTML = sfErrorHtml(listErr); return; }
 
-      // ── Stage cards — one per checklist stage, click to drill in ──
-      var stageCardsHtml = API_CONFIG.checklistStages.map(function(stage) {
-        return '<div class="sf-stage-card" data-stageid="' + stage.id + '" style="cursor:pointer;border:1.5px solid var(--border-light);border-radius:var(--radius-lg);padding:18px;background:#fff;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:10px">'
-          + '<div style="display:flex;align-items:center;gap:10px">'
-          + '<span style="font-size:24px">' + stage.icon + '</span>'
-          + '<div style="flex:1">'
-          + '<div style="font-family:var(--font-d);font-size:15px;font-weight:600;color:var(--navy)">' + stage.label + '</div>'
-          + '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px">' + stage.categories.length + ' categories</div>'
-          + '</div>'
-          + '</div>'
-          + '<p style="font-size:12.5px;color:var(--text-muted);line-height:1.5;margin:0">' + (stage.description || '') + '</p>'
-          + '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">'
-          + '<div style="flex:1;height:8px;background:var(--border-light);border-radius:4px;overflow:hidden">'
-          + '<div id="sf-stage-bar-' + stage.id + '" style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width .4s ease"></div>'
-          + '</div>'
-          + '<span id="sf-stage-pct-' + stage.id + '" style="font-size:12px;font-weight:700;color:var(--navy);min-width:32px;text-align:right">0%</span>'
-          + '</div>'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">'
-          + '<span id="sf-stage-status-' + stage.id + '" style="font-size:11.5px;color:var(--text-muted)">Checking...</span>'
-          + '<span style="font-size:12px;color:var(--gold-muted);font-weight:600">Open &#8594;</span>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-
-      bodyEl.innerHTML =
-        '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
-        + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
-        + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime
-        + ' &mdash; Folder: <strong style="color:var(--navy)">' + (folder.Name || matterFolderId) + '</strong></div>'
-
-        // ── Document Progress — always visible at top ──
-        + '<div class="card" style="margin-bottom:20px">'
-        + '<div class="card-header">'
-        + '<span class="card-title">&#127775; Document Progress</span>'
-        + '<span id="sf-prog-label" style="font-size:12px;color:var(--text-muted)">Checking folders...</span>'
-        + '</div>'
-        + '<div style="padding:16px 20px">'
-        + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
-        + '<div style="flex:1;height:12px;background:var(--border-light);border-radius:6px;overflow:hidden">'
-        + '<div id="sf-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:6px;transition:width .4s ease"></div>'
-        + '</div>'
-        + '<span id="sf-prog-pct" style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--navy);min-width:44px;text-align:right">0%</span>'
-        + '</div>'
-        + '<div style="display:flex;gap:16px;flex-wrap:wrap">'
-        + '<div style="display:flex;align-items:center;gap:6px;font-size:12.5px">'
-        + '<span id="sf-prog-req-icon" style="font-size:15px">&#9900;</span>'
-        + '<span id="sf-prog-req-text" style="color:var(--text-muted)">Required: checking...</span>'
-        + '</div>'
-        + '<div style="display:flex;align-items:center;gap:6px;font-size:12.5px">'
-        + '<span style="font-size:15px;color:var(--text-muted)">&#9900;</span>'
-        + '<span id="sf-prog-opt-text" style="color:var(--text-muted)">Optional: checking...</span>'
-        + '</div>'
-        + '</div>'
-        + '<div id="sf-prog-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">'
-        + allCategories.map(function(cat) {
-            return '<div id="sf-prog-cat-' + cat.id + '" title="' + cat.label + '" '
-              + 'style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;'
-              + 'border:1px solid var(--border);background:var(--parchment);font-size:11.5px;color:var(--text-muted)">'
-              + '<span id="sf-prog-dot-' + cat.id + '" style="width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;display:inline-block"></span>'
-              + '<span style="white-space:nowrap">' + cat.label + '</span>'
-              + '</div>';
-          }).join('')
-        + '</div>'
-        + '</div></div>'
-
-        // ── Checklist Stages ──────────────────────
-        + '<div>'
-        + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">'
-        + '<h3 style="font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--navy)">Document Checklists</h3>'
-        + '<span style="font-size:12px;color:var(--text-muted)">Click a checklist to view and upload</span>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">'
-        + stageCardsHtml
-        + '</div></div>';
-
-      // ── Wire stage card clicks — navigate to focused checklist view ──
-      bodyEl.querySelectorAll('.sf-stage-card').forEach(function(card) {
-        card.addEventListener('mouseenter', function() { this.style.borderColor = 'var(--gold)'; this.style.boxShadow = 'var(--shadow)'; });
-        card.addEventListener('mouseleave', function() { this.style.borderColor = 'var(--border-light)'; this.style.boxShadow = 'none'; });
-        card.addEventListener('click', function() {
-          FilesNav.stageId = this.dataset.stageid;
-          navigate('clientuploads');
+        var categoryFolders = (items || []).filter(sfIsFolder).sort(function(a, b) {
+          return naturalSort(a.Name, b.Name);
         });
-      });
 
-      // ── Progress tracker (shared state across async category loads) ──
-      var total    = allCategories.length;
-      var required = allCategories.filter(function(c){ return c.required; });
-      var optional = allCategories.filter(function(c){ return !c.required; });
-      var catStatus = {}; // catId → true (has files) | false (empty)
-      var resolved  = 0;
-
-      // Per-stage tracking for the stage card mini-bars
-      var stageStatus = {}; // stageId → { catStatus: {}, resolved: 0, total: n }
-      API_CONFIG.checklistStages.forEach(function(stage) {
-        stageStatus[stage.id] = { catStatus: {}, resolved: 0, total: stage.categories.length };
-      });
-
-      function updateStageCard(stageId) {
-        var s = stageStatus[stageId];
-        if (!s) return;
-        var filled = Object.keys(s.catStatus).filter(function(k){ return s.catStatus[k]; }).length;
-        var pct = s.total > 0 ? Math.round((filled / s.total) * 100) : 0;
-        var bar = document.getElementById('sf-stage-bar-' + stageId);
-        var pctEl = document.getElementById('sf-stage-pct-' + stageId);
-        var statusEl = document.getElementById('sf-stage-status-' + stageId);
-        if (!bar) return;
-        bar.style.width = pct + '%';
-        bar.style.background = pct === 100 ? 'var(--success)' : 'var(--gold)';
-        pctEl.textContent = pct + '%';
-        pctEl.style.color = pct === 100 ? 'var(--success)' : 'var(--navy)';
-        if (s.resolved < s.total) {
-          statusEl.textContent = 'Checking (' + s.resolved + '/' + s.total + ')...';
-        } else if (pct === 100) {
-          statusEl.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; Complete</span>';
-        } else {
-          statusEl.textContent = filled + ' of ' + s.total + ' have files';
-        }
-      }
-
-      function updateProgress() {
-        var filled    = Object.keys(catStatus).filter(function(k){ return catStatus[k]; }).length;
-        var reqFilled = required.filter(function(c){ return catStatus[c.id]; }).length;
-        var optFilled = optional.filter(function(c){ return catStatus[c.id]; }).length;
-        var pct       = total > 0 ? Math.round((filled / total) * 100) : 0;
-        var allReqDone = reqFilled === required.length;
-
-        var bar     = document.getElementById('sf-prog-bar');
-        var pctEl   = document.getElementById('sf-prog-pct');
-        var label   = document.getElementById('sf-prog-label');
-        var reqIcon = document.getElementById('sf-prog-req-icon');
-        var reqText = document.getElementById('sf-prog-req-text');
-        var optText = document.getElementById('sf-prog-opt-text');
-        if (!bar) return;
-
-        bar.style.width = pct + '%';
-        bar.style.background = allReqDone
-          ? 'linear-gradient(90deg,var(--success),#52B788)'
-          : pct > 0
-            ? 'linear-gradient(90deg,var(--gold),var(--gold-light))'
-            : 'var(--border-light)';
-
-        pctEl.textContent = pct + '%';
-        pctEl.style.color = allReqDone ? 'var(--success)' : 'var(--navy)';
-
-        if (resolved < total) {
-          label.textContent = 'Checking folders (' + resolved + ' of ' + total + ')...';
-        } else if (pct === 100) {
-          label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All documents submitted!</span>';
-        } else if (allReqDone) {
-          label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All required documents submitted</span>'
-            + ' &mdash; ' + (total - filled) + ' optional remaining';
-        } else {
-          label.textContent = filled + ' of ' + total + ' categories have files';
+        if (!categoryFolders.length) {
+          bodyEl.innerHTML = '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+            + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+            + 'Connected to ShareFile &mdash; Folder: <strong style="color:var(--navy)">' + actualName + '</strong></div>'
+            + '<div class="card"><div class="card-body">'
+            + emptyState('&#128193;', 'No upload categories yet', 'No subfolders were found inside "' + actualName + '". Ask your attorney\'s office to confirm the template has subfolders configured.')
+            + '</div></div>';
+          return;
         }
 
-        reqIcon.style.color = allReqDone ? 'var(--success)' : 'var(--danger)';
-        reqIcon.textContent  = allReqDone ? '✓' : '○';
-        reqText.textContent  = 'Required: ' + reqFilled + ' / ' + required.length + ' submitted';
-        reqText.style.color  = allReqDone ? 'var(--success)' : 'var(--danger)';
-        optText.textContent  = 'Optional: ' + optFilled + ' / ' + optional.length + ' submitted';
-      }
+        bodyEl.innerHTML =
+          '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
+          + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
+          + 'Connected to ShareFile &mdash; Last refreshed at ' + refreshTime
+          + ' &mdash; Folder: <strong style="color:var(--navy)">' + actualName + '</strong></div>'
 
-      // Expose updater so checklist stage view can call it after file count resolves
-      FileCache.reportCategoryStatus = function(catId, hasFiles, stageId) {
-        catStatus[catId] = hasFiles;
-        resolved++;
-        updateProgress();
+          // ── Document Progress — always visible at top ──
+          + '<div class="card" style="margin-bottom:20px">'
+          + '<div class="card-header">'
+          + '<span class="card-title">&#127775; Document Progress</span>'
+          + '<span id="sf-prog-label" style="font-size:12px;color:var(--text-muted)">Checking folders...</span>'
+          + '</div>'
+          + '<div style="padding:16px 20px">'
+          + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+          + '<div style="flex:1;height:12px;background:var(--border-light);border-radius:6px;overflow:hidden">'
+          + '<div id="sf-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:6px;transition:width .4s ease"></div>'
+          + '</div>'
+          + '<span id="sf-prog-pct" style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--navy);min-width:44px;text-align:right">0%</span>'
+          + '</div>'
+          + '<div id="sf-prog-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'
+          + categoryFolders.map(function(f) {
+              return '<div id="sf-prog-cat-' + f.Id + '" title="' + f.Name + '" '
+                + 'style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;'
+                + 'border:1px solid var(--border);background:var(--parchment);font-size:11.5px;color:var(--text-muted)">'
+                + '<span id="sf-prog-dot-' + f.Id + '" style="width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;display:inline-block"></span>'
+                + '<span style="white-space:nowrap">' + f.Name + '</span>'
+                + '</div>';
+            }).join('')
+          + '</div>'
+          + '</div></div>'
 
-        if (stageId && stageStatus[stageId]) {
-          stageStatus[stageId].catStatus[catId] = hasFiles;
-          stageStatus[stageId].resolved++;
-          updateStageCard(stageId);
-        }
+          // ── Document Checklist — one card per real ShareFile subfolder ──
+          + '<div class="card">'
+          + '<div class="card-header">'
+          + '<span class="card-title">&#128203; Document Checklist</span>'
+          + '<span style="font-size:12px;color:var(--text-muted)">Upload documents requested by your attorney</span>'
+          + '</div>'
+          + '<div id="sf-categories" style="padding:12px 16px">'
+          + categoryFolders.map(function(f) { return buildCategoryCard(f); }).join('')
+          + '</div></div>';
 
-        // Update per-category dot in the progress panel
-        var dot = document.getElementById('sf-prog-dot-' + catId);
-        var pill = document.getElementById('sf-prog-cat-' + catId);
-        if (dot && pill) {
-          if (hasFiles) {
-            dot.style.background = 'var(--success)';
-            pill.style.borderColor = 'var(--success)';
-            pill.style.background = 'var(--success-bg)';
-            pill.style.color = 'var(--success)';
+        // ── Progress tracker ──────────────────────
+        var total    = categoryFolders.length;
+        var catStatus = {}; // folderId → true (has files) | false (empty)
+        var resolved  = 0;
+
+        function updateProgress() {
+          var filled = Object.keys(catStatus).filter(function(k){ return catStatus[k]; }).length;
+          var pct    = total > 0 ? Math.round((filled / total) * 100) : 0;
+          var allDone = resolved === total && filled === total;
+
+          var bar   = document.getElementById('sf-prog-bar');
+          var pctEl = document.getElementById('sf-prog-pct');
+          var label = document.getElementById('sf-prog-label');
+          if (!bar) return;
+
+          bar.style.width = pct + '%';
+          bar.style.background = allDone
+            ? 'linear-gradient(90deg,var(--success),#52B788)'
+            : pct > 0
+              ? 'linear-gradient(90deg,var(--gold),var(--gold-light))'
+              : 'var(--border-light)';
+
+          pctEl.textContent = pct + '%';
+          pctEl.style.color = allDone ? 'var(--success)' : 'var(--navy)';
+
+          if (resolved < total) {
+            label.textContent = 'Checking folders (' + resolved + ' of ' + total + ')...';
+          } else if (allDone) {
+            label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All documents submitted!</span>';
           } else {
-            var cat = allCategories.find(function(c){ return c.id === catId; });
-            var isReq = cat && cat.required;
-            dot.style.background = isReq ? 'var(--danger)' : 'var(--border)';
-            pill.style.borderColor = isReq ? 'var(--danger)' : 'var(--border)';
-            pill.style.color = isReq ? 'var(--danger)' : 'var(--text-muted)';
+            label.textContent = filled + ' of ' + total + ' folders have files';
           }
         }
-      };
 
-      // ── Silently resolve every category's file count (no UI built yet) ──
-      // This powers both the stage card mini-bars and the progress panel
-      // without requiring the client to open every checklist first.
-      API_CONFIG.checklistStages.forEach(function(stage) {
-        stage.categories.forEach(function(cat) {
-          SF.findOrCreateFolder(matterFolderId, cat.label, function(err, catFolderId) {
-            if (err) { FileCache.reportCategoryStatus(cat.id, false, stage.id); return; }
-            FileCache.folders[cat.id] = catFolderId;
-            SF.listFolder(catFolderId, function(err2, items) {
-              var hasFiles = !err2 && (items || []).filter(sfIsFile).length > 0;
-              FileCache.reportCategoryStatus(cat.id, hasFiles, stage.id);
-            });
-          });
+        // Expose updater so category cards can call it after file count resolves
+        FileCache.reportCategoryStatus = function(folderId, hasFiles) {
+          catStatus[folderId] = hasFiles;
+          resolved++;
+          updateProgress();
+
+          var dot  = document.getElementById('sf-prog-dot-' + folderId);
+          var pill = document.getElementById('sf-prog-cat-' + folderId);
+          if (dot && pill) {
+            if (hasFiles) {
+              dot.style.background = 'var(--success)';
+              pill.style.borderColor = 'var(--success)';
+              pill.style.background = 'var(--success-bg)';
+              pill.style.color = 'var(--success)';
+            } else {
+              dot.style.background = 'var(--danger)';
+              pill.style.borderColor = 'var(--danger)';
+              pill.style.color = 'var(--danger)';
+            }
+          }
+        };
+
+        // Wire each category card's upload zone + load its files
+        categoryFolders.forEach(function(f) {
+          wireCategoryCard(f, bodyEl);
         });
       });
-    }); // end verify
-  }); // end getMatterFolderId
+    });
+  });
 }
 
 // Generic collapsible section toggle — returns true if now open
@@ -3076,94 +2962,38 @@ function toggleCollapsible(headerEl, bodyId) {
   return !isOpen;
 }
 
-// ── CHECKLIST STAGE — focused single-stage view ────────
-function loadChecklistStage(bodyEl, matterId, stageId) {
-  if (!bodyEl) return;
-
-  var stage = API_CONFIG.checklistStages.find(function(s){ return s.id === stageId; });
-  if (!stage) {
-    FilesNav.stageId = null;
-    loadClientUploadsHome(bodyEl, matterId);
-    return;
-  }
-
-  SF.getMatterFolderId(matterId, function(err, matterFolderId) {
-    if (!bodyEl) return;
-    if (err) { bodyEl.innerHTML = sfErrorHtml(err); return; }
-
-    FileCache.matterFolderId = matterFolderId;
-    var categoriesHtml = stage.categories.map(function(cat) { return buildCategoryCard(cat); }).join('');
-
-    bodyEl.innerHTML =
-      '<div style="margin-bottom:16px">'
-      + '<a id="sf-back-to-home" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--gold-muted);font-weight:600;cursor:pointer">'
-      + '&#8592; Back to Client Uploads</a>'
-      + '</div>'
-      + '<div class="card">'
-      + '<div class="card-header">'
-      + '<span class="card-title">' + stage.icon + ' ' + stage.label + '</span>'
-      + '<span style="font-size:12px;color:var(--text-muted)">' + (stage.description || '') + '</span>'
-      + '</div>'
-      + '<div id="sf-categories" style="padding:12px 16px">' + categoriesHtml + '</div>'
-      + '</div>';
-
-    document.getElementById('sf-back-to-home').addEventListener('click', function() {
-      FilesNav.stageId = null;
-      navigate('clientuploads');
-    });
-
-    // Wire category upload buttons and toggles — pass stage.id so progress reporting
-    // (if Client Uploads home is later reopened) stays consistent
-    stage.categories.forEach(function(cat) {
-      wireCategoryCard(cat, matterFolderId, bodyEl, matterId, stage.id);
-    });
-  });
-}
-
-function buildCategoryCard(cat) {
-  var requiredLabel = cat.required
-    ? '<span style="font-size:10px;background:var(--danger-bg);color:var(--danger);padding:1px 6px;border-radius:10px;font-weight:600;margin-left:6px">Required</span>'
-    : '<span style="font-size:10px;background:var(--parchment-dk);color:var(--text-muted);padding:1px 6px;border-radius:10px;margin-left:6px">Optional</span>';
-
-  return '<div class="sf-category" id="sfcat-' + cat.id + '">'
-    + '<div class="sf-category-header" data-catid="' + cat.id + '">'
-    + '<span style="font-size:18px">' + catIcon(cat.id) + '</span>'
-    + '<span class="sf-category-label">' + cat.label + requiredLabel + '</span>'
-    + '<span class="sf-category-count" id="sfcount-' + cat.id + '">Loading...</span>'
+function buildCategoryCard(folder) {
+  return '<div class="sf-category" id="sfcat-' + folder.Id + '">'
+    + '<div class="sf-category-header" data-catid="' + folder.Id + '">'
+    + '<span style="font-size:18px">&#128193;</span>'
+    + '<span class="sf-category-label">' + folder.Name + '</span>'
+    + '<span class="sf-category-count" id="sfcount-' + folder.Id + '">Loading...</span>'
     + '<span style="color:var(--text-muted);font-size:12px;margin-left:8px">&#9654;</span>'
     + '</div>'
-    + '<div class="sf-category-body" id="sfbody-' + cat.id + '">'
+    + '<div class="sf-category-body" id="sfbody-' + folder.Id + '">'
     + '<div style="padding:12px 16px;border-top:1px solid var(--border-light)">'
-    + '<input type="file" id="sfinput-' + cat.id + '" accept="' + cat.accept + '" multiple style="display:none">'
-    + '<div id="sfzone-' + cat.id + '" class="upload-zone" style="padding:20px;margin-bottom:10px">'
+    + '<input type="file" id="sfinput-' + folder.Id + '" multiple style="display:none">'
+    + '<div id="sfzone-' + folder.Id + '" class="upload-zone" style="padding:20px;margin-bottom:10px">'
     + '<div class="upload-icon" style="font-size:24px">&#128196;</div>'
     + '<div class="upload-text" style="font-size:13px">Drop files here or <span style="color:var(--gold-muted);font-weight:600;cursor:pointer">browse</span></div>'
-    + '<div class="upload-subtext">Accepted: ' + cat.accept + '</div>'
     + '</div>'
-    + '<div id="sffiles-' + cat.id + '"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px">Loading files in this category...</div></div>'
+    + '<div id="sffiles-' + folder.Id + '"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px">Loading files in this folder...</div></div>'
     + '</div>'
     + '</div>'
     + '</div>';
 }
 
-function wireCategoryCard(cat, matterFolderId, pageEl, matterId, stageId) {
-  var header   = document.querySelector('.sf-category-header[data-catid="' + cat.id + '"]');
-  var body     = document.getElementById('sfbody-' + cat.id);
-  var zone     = document.getElementById('sfzone-' + cat.id);
-  var input    = document.getElementById('sfinput-' + cat.id);
+function wireCategoryCard(folder, pageEl) {
+  var header   = document.querySelector('.sf-category-header[data-catid="' + folder.Id + '"]');
+  var body     = document.getElementById('sfbody-' + folder.Id);
+  var zone     = document.getElementById('sfzone-' + folder.Id);
+  var input    = document.getElementById('sfinput-' + folder.Id);
   var arrow    = header ? header.querySelector('span:last-child') : null;
   if (!header || !body || !zone || !input) return;
 
-  // Load files for this category
-  SF.findOrCreateFolder(matterFolderId, cat.label, function(err, catFolderId) {
-    if (err) {
-      document.getElementById('sfcount-' + cat.id).textContent = 'Error';
-      document.getElementById('sffiles-' + cat.id).innerHTML = '<p style="color:var(--danger);font-size:13px;padding:8px 0">' + err + '</p>';
-      return;
-    }
-    FileCache.folders[cat.id] = catFolderId;
-    refreshCategoryFiles(cat, catFolderId, stageId);
-  });
+  // Folder already exists in ShareFile — just load its files. Never created here.
+  FileCache.folders[folder.Id] = folder.Id;
+  refreshCategoryFiles(folder);
 
   // Toggle open/close
   header.addEventListener('click', function() {
@@ -3178,23 +3008,21 @@ function wireCategoryCard(cat, matterFolderId, pageEl, matterId, stageId) {
   zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
   zone.addEventListener('drop', function(e) {
     e.preventDefault(); zone.classList.remove('drag-over');
-    uploadToCategory(cat, Array.from(e.dataTransfer.files), stageId);
+    uploadToCategory(folder, Array.from(e.dataTransfer.files));
   });
   input.addEventListener('change', function() {
-    uploadToCategory(cat, Array.from(this.files), stageId);
+    uploadToCategory(folder, Array.from(this.files));
     this.value = '';
   });
 }
 
-function uploadToCategory(cat, files, stageId) {
-  var catFolderId = FileCache.folders[cat.id];
-  if (!catFolderId) { showToast('Category folder not ready yet. Please wait a moment.', 'error'); return; }
+function uploadToCategory(folder, files) {
   if (!files || !files.length) return;
 
   files.forEach(function(file) {
     // Inject a progress row into the category file list
     var progressId = 'sfprog-' + Date.now();
-    var filesEl = document.getElementById('sffiles-' + cat.id);
+    var filesEl = document.getElementById('sffiles-' + folder.Id);
     if (filesEl) {
       var progRow = document.createElement('div');
       progRow.id = progressId;
@@ -3208,7 +3036,7 @@ function uploadToCategory(cat, files, stageId) {
       filesEl.insertBefore(progRow, filesEl.firstChild);
     }
 
-    SF.uploadFile(catFolderId, file,
+    SF.uploadFile(folder.Id, file,
       function(pct) {
         var bar = document.getElementById(progressId + '-bar');
         var status = document.getElementById(progressId + '-status');
@@ -3223,39 +3051,34 @@ function uploadToCategory(cat, files, stageId) {
         } else {
           showToast('"' + file.name + '" uploaded successfully.', 'success');
           if (progEl) progEl.remove();
-          // Refresh category file list and progress reporting.
-          // Note: loadAllFiles is NOT called here since All Case Files now
-          // lazy-loads only when expanded — it will refresh next time it's opened.
-          refreshCategoryFiles(cat, catFolderId, stageId);
+          refreshCategoryFiles(folder);
         }
       }
     );
   });
 }
 
-function refreshCategoryFiles(cat, catFolderId, stageId) {
-  var countEl = document.getElementById('sfcount-' + cat.id);
-  var filesEl = document.getElementById('sffiles-' + cat.id);
+function refreshCategoryFiles(folder) {
+  var countEl = document.getElementById('sfcount-' + folder.Id);
+  var filesEl = document.getElementById('sffiles-' + folder.Id);
 
-  SF.listFolder(catFolderId, function(err, items) {
-    var files = (items || []).filter(sfIsFile);
+  SF.listFolder(folder.Id, function(err, items) {
+    var files = (items || []).filter(sfIsFile).sort(function(a, b) { return naturalSort(a.Name, b.Name); });
 
     if (countEl) {
       countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
-      countEl.style.color = (cat.required && files.length === 0) ? 'var(--danger)' : 'var(--text-muted)';
+      countEl.style.color = files.length === 0 ? 'var(--danger)' : 'var(--text-muted)';
     }
 
-    // Report to progress tracker (only present when the Home view built it —
-    // safe no-op if reportCategoryStatus wasn't set up, e.g. direct deep link)
+    // Report to progress tracker (only present when the Home view built it)
     if (FileCache.reportCategoryStatus) {
-      FileCache.reportCategoryStatus(cat.id, files.length > 0, stageId);
+      FileCache.reportCategoryStatus(folder.Id, files.length > 0);
     }
 
     if (!filesEl) return;
     if (err) { filesEl.innerHTML = '<p style="color:var(--danger);font-size:13px;padding:8px 0">' + err + '</p>'; return; }
     if (!files.length) {
-      filesEl.innerHTML = '<div style="padding:10px 0;font-size:13px;color:var(--text-muted)">'
-        + (cat.required ? '&#9888; No files uploaded yet — this document is required.' : 'No files uploaded yet.') + '</div>';
+      filesEl.innerHTML = '<div style="padding:10px 0;font-size:13px;color:var(--text-muted)">&#9888; No files uploaded yet.</div>';
       return;
     }
 
@@ -3319,8 +3142,8 @@ function renderFolderBrowser() {
       return;
     }
 
-    var files   = (items || []).filter(sfIsFile);
-    var folders = (items || []).filter(sfIsFolder);
+    var files   = (items || []).filter(sfIsFile).sort(function(a, b) { return naturalSort(a.Name, b.Name); });
+    var folders = (items || []).filter(sfIsFolder).sort(function(a, b) { return naturalSort(a.Name, b.Name); });
     var total   = files.length + folders.length;
 
     if (countEl) {
