@@ -6,6 +6,7 @@
 <title>Meriwether &amp; Tharp | Client Portal</title>
 <!-- config.js is excluded from Git via .gitignore — contains API keys -->
 <script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -256,6 +257,9 @@ input,select,textarea{font-family:inherit}
     <div class="login-footer">Your case documents and login are both secured by ShareFile.</div>
     <p style="text-align:center;font-size:12px;margin-top:10px">
       <a href="#" class="forgot-link" id="sf-forgot-link">Forgot your ShareFile password?</a>
+    </p>
+    <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:4px">
+      Enter your email on the ShareFile sign-in page, then click "Forgot Password?" there.
     </p>
 
     <!-- DEV TEST PANEL — remove or hide in production -->
@@ -871,25 +875,16 @@ function renderDashboard(el) {
   var pending = TaskCache.data
     ? TaskCache.data.filter(function(t){ return taskStatusGroup(t.status) !== 'complete'; }).length
     : MockData.tasks.filter(function(t){ return !t.done; }).length;
-  var totalA  = MockData.assets.reduce(function(s,a){ return s+(a.val||0); }, 0);
 
-  var fileRows = '';
-  MockData.files.slice(0,3).forEach(function(f){
-    fileRows += '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light)">'
-      + '<span style="font-size:20px">' + fileIcon(f.name) + '</span>'
-      + '<div><div style="font-size:13px;font-weight:500">' + f.name + '</div>'
-      + '<div style="font-size:11.5px;color:var(--text-muted)">' + f.uploaded + ' &middot; ' + f.size + '</div></div></div>';
-  });
-
-  // Render shell — staff card and appointment table fill in async
+  // Render shell — staff, appointments, assets, and recent files all fill in async
   el.innerHTML = '<div class="page-header"><div class="page-title">Welcome back, ' + u.name.split(' ')[0] + '</div>'
     + '<div class="page-subtitle">Here\'s what\'s happening in your case today.</div></div>'
     + '<div id="dash-alert" class="alert-banner">&#128203; Loading your case information...</div>'
     + '<div class="grid-4" style="margin-bottom:24px">'
     + '<div class="stat-tile" id="dash-appt-tile"><div class="stat-label">Upcoming Appointments</div><div class="stat-value">...</div><div class="stat-note">Loading</div></div>'
     + '<div class="stat-tile"><div class="stat-label">Pending Tasks</div><div class="stat-value">' + pending + '</div></div>'
-    + '<div class="stat-tile"><div class="stat-label">Documents</div><div class="stat-value">' + MockData.files.length + '</div><div class="stat-note">In your case file</div></div>'
-    + '<div class="stat-tile"><div class="stat-label">Known Assets</div><div class="stat-value" style="font-size:20px">' + fmt$(totalA) + '</div><div class="stat-note">Some values pending</div></div>'
+    + '<div class="stat-tile" id="dash-docs-tile"><div class="stat-label">Documents</div><div class="stat-value">...</div><div class="stat-note">Loading</div></div>'
+    + '<div class="stat-tile" id="dash-assets-tile"><div class="stat-label">Marital Value</div><div class="stat-value">...</div><div class="stat-note">Loading</div></div>'
     + '</div>'
     + '<div class="grid-2" style="margin-bottom:24px">'
     + '<div class="card"><div class="card-header"><span class="card-title">Upcoming Appointments</span>'
@@ -903,7 +898,7 @@ function renderDashboard(el) {
     + '</div>'
     + '<div class="card" style="margin-bottom:24px"><div class="card-header"><span class="card-title">Recent Files</span>'
     + '<button class="btn-sm btn-outline" onclick="navigate(\'allfiles\')">View All</button></div>'
-    + '<div>' + fileRows + '</div></div>'
+    + '<div id="dash-recent-files"><div style="text-align:center;padding:20px;color:var(--text-muted)">&#128193; Loading...</div></div></div>'
     + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
     + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
     + '<span class="integration-badge sf">&#128193; ShareFile</span></div>';
@@ -1009,6 +1004,72 @@ function renderDashboard(el) {
     });
     tableEl.innerHTML = '<table class="data-table"><thead><tr><th>Subject</th><th>Date</th><th>Time</th><th>Type</th></tr></thead>'
       + '<tbody>' + rows + '</tbody></table>';
+  });
+
+  // ── Fetch marital balance sheet (for the Marital Value tile) ──
+  fetchMBS(API_CONFIG.matterId, function(err, mbsRows) {
+    var tile = document.getElementById('dash-assets-tile');
+    if (!tile) return;
+
+    if (err || !mbsRows) {
+      tile.innerHTML = '<div class="stat-label">Marital Value</div>'
+        + '<div class="stat-value" style="font-size:16px;color:var(--text-muted)">Unavailable</div>'
+        + '<div class="stat-note">Could not load</div>';
+      return;
+    }
+
+    var totalMarital = mbsRows.reduce(function(sum, r){ return sum + calcMaritalValue(r); }, 0);
+    tile.innerHTML = '<div class="stat-label">Marital Value</div>'
+      + '<div class="stat-value" style="font-size:20px">' + fmt$(totalMarital) + '</div>'
+      + '<div class="stat-note">' + mbsRows.length + ' item' + (mbsRows.length !== 1 ? 's' : '') + ' on record</div>';
+  });
+
+  // ── Fetch recent files from this client's ShareFile matter folder ──
+  SF.getMatterFolderId(API_CONFIG.matterId, function(folderErr, matterFolderId) {
+    var docsTile  = document.getElementById('dash-docs-tile');
+    var filesEl   = document.getElementById('dash-recent-files');
+    if (!docsTile || !filesEl) return;
+
+    if (folderErr) {
+      docsTile.innerHTML = '<div class="stat-label">Documents</div>'
+        + '<div class="stat-value" style="font-size:16px;color:var(--text-muted)">&mdash;</div>'
+        + '<div class="stat-note">Connect ShareFile to view</div>';
+      filesEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">'
+        + 'Sign in to ShareFile to see your recent files.</div>';
+      return;
+    }
+
+    SF.listFolder(matterFolderId, function(listErr, items) {
+      if (listErr) {
+        docsTile.innerHTML = '<div class="stat-label">Documents</div>'
+          + '<div class="stat-value" style="font-size:16px;color:var(--text-muted)">Unavailable</div>'
+          + '<div class="stat-note">Could not load</div>';
+        filesEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Could not load files.</div>';
+        return;
+      }
+
+      var files = (items || []).filter(sfIsFile).sort(function(a, b) {
+        return new Date(b.CreationDate || 0) - new Date(a.CreationDate || 0);
+      });
+
+      docsTile.innerHTML = '<div class="stat-label">Documents</div>'
+        + '<div class="stat-value">' + files.length + '</div>'
+        + '<div class="stat-note">In your case file</div>';
+
+      if (!files.length) {
+        filesEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No files yet.</div>';
+        return;
+      }
+
+      filesEl.innerHTML = files.slice(0, 3).map(function(f) {
+        var size = f.FileSizeBytes ? Math.round(f.FileSizeBytes / 1024) + ' KB' : '';
+        var date = f.CreationDate ? new Date(f.CreationDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light)">'
+          + '<span style="font-size:20px">' + fileIcon(f.Name) + '</span>'
+          + '<div><div style="font-size:13px;font-weight:500">' + f.Name + '</div>'
+          + '<div style="font-size:11.5px;color:var(--text-muted)">' + date + (size ? ' &middot; ' + size : '') + '</div></div></div>';
+      }).join('');
+    });
   });
 }
 
@@ -2212,6 +2273,7 @@ function renderMBS(el) {
     + '<div class="page-actions">'
     + '<button class="btn-sm btn-outline" id="mbs-reset">&#8635; Reset Percentages</button>'
     + '<button class="btn-sm btn-outline" id="mbs-print">&#128196; Print / Export</button>'
+    + '<button class="btn-sm btn-gold" id="mbs-save-sf">&#9729; Save to Case Documents</button>'
     + '</div></div>'
     + '<div id="mbs-body"><div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted)">'
     + '<div style="font-size:28px;margin-bottom:12px">&#9878;</div>'
@@ -2471,7 +2533,128 @@ function renderMBS(el) {
     document.getElementById('mbs-print').addEventListener('click', function() {
       window.print();
     });
+
+    // ── Save scenario to Case Documents (ShareFile) ──────
+    document.getElementById('mbs-save-sf').addEventListener('click', function() {
+      saveMBSScenarioToShareFile(rows, pctOverrides, this);
+    });
   });
+}
+
+// Builds an .xlsx workbook from the current MBS rows + any live percentage
+// overrides, then uploads it into a "MBS Scenarios" subfolder inside the
+// client's Case Documents folder. Creates that subfolder if it doesn't
+// exist yet — the one deliberate exception to Case Documents normally
+// being lookup-only, since this file is generated by the client's own
+// session rather than pulled from a staff-managed template.
+function saveMBSScenarioToShareFile(rows, pctOverrides, btnEl) {
+  if (typeof XLSX === 'undefined') {
+    showToast('Spreadsheet library failed to load. Check your internet connection and try again.', 'error');
+    return;
+  }
+
+  var origLabel = btnEl.innerHTML;
+  btnEl.innerHTML = '&#9203; Building file...';
+  btnEl.disabled = true;
+
+  // ── Build the data rows exactly as currently displayed, including overrides ──
+  var hasOverride = Object.keys(pctOverrides).length > 0;
+  var sheetRows = [];
+  sheetRows.push(['Marital Balance Sheet' + (hasOverride ? ' — Client Scenario' : '')]);
+  sheetRows.push(['Generated', new Date().toLocaleString('en-US')]);
+  sheetRows.push(['Matter ID', API_CONFIG.matterId]);
+  sheetRows.push([]);
+  sheetRows.push(['Description', 'Ownership', 'Total Value', 'Debt Amount', 'Marital Value', '% to Client', 'Client Share', 'OP Share', 'Valuation Date']);
+
+  var totalMarital = 0, totalClient = 0, totalOP = 0, totalValue = 0, totalDebt = 0;
+
+  rows.forEach(function(r, idx) {
+    var mv  = calcMaritalValue(r);
+    var pct = (idx in pctOverrides) ? pctOverrides[idx] : null;
+    var cmv = (idx in pctOverrides) ? mv * (pctOverrides[idx] / 100)
+            : (mbsHasValue(r['Amount to Client']) ? mbsCoalesce(r['Amount to Client']) : calcClientMaritalValue(r));
+    var omv = mv - cmv;
+    var useAmt = !(idx in pctOverrides) && mbsHasValue(r['Amount to Client']);
+    var pctDisplay = useAmt ? 'Fixed amt' : ((pct != null ? pct : mbsCoalesce(r['Percent to Client'])) + '%');
+    var valDate = r['Valuation Date'] ? new Date(r['Valuation Date']).toLocaleDateString('en-US') : '';
+
+    totalMarital += mv;
+    totalClient  += cmv;
+    totalOP      += omv;
+    totalValue   += mbsCoalesce(r['Total Value']);
+    totalDebt    += mbsCoalesce(r['Debt Amount']);
+
+    sheetRows.push([
+      r['Title'] || '',
+      ownershipLabel(r['Ownership']),
+      mbsCoalesce(r['Total Value']),
+      mbsCoalesce(r['Debt Amount']),
+      mv,
+      pctDisplay,
+      cmv,
+      omv,
+      valDate
+    ]);
+  });
+
+  sheetRows.push([]);
+  sheetRows.push(['Totals', '', totalValue, totalDebt, totalMarital, '', totalClient, totalOP, '']);
+  sheetRows.push([]);
+  sheetRows.push(['% to Client (Overall)', totalMarital !== 0 ? ((totalClient / totalMarital) * 100).toFixed(1) + '%' : '—']);
+  if (hasOverride) {
+    sheetRows.push([]);
+    sheetRows.push(['Note: This file reflects client-adjusted scenario percentages for planning purposes only.']);
+    sheetRows.push(['It does not modify the official case record.']);
+  }
+
+  // ── Build workbook ────────────────────────────────────
+  var ws = XLSX.utils.aoa_to_sheet(sheetRows);
+  ws['!cols'] = [
+    { wch: 32 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+    { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }
+  ];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'MBS Scenario');
+
+  var wbArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  var blob = new Blob([wbArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  var stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g, '-');
+  var fileName = 'MBS Scenario - ' + stamp + '.xlsx';
+  var file = new File([blob], fileName, { type: blob.type });
+
+  // ── Find matter root, then Case Documents, then MBS Scenarios subfolder ──
+  btnEl.innerHTML = '&#9203; Locating Case Documents...';
+  SF.getMatterFolderId(API_CONFIG.matterId, function(err, matterFolderId) {
+    if (err) { mbsSaveError(btnEl, origLabel, err); return; }
+
+    SF.findFolderByPrefix(matterFolderId, ['case documents'], function(cdErr, caseDocsFolderId) {
+      if (cdErr) {
+        mbsSaveError(btnEl, origLabel, 'Could not find the Case Documents folder for this matter.');
+        return;
+      }
+
+      SF.findOrCreateFolder(caseDocsFolderId, 'MBS Scenarios', function(mbsErr, mbsScenariosFolderId) {
+        if (mbsErr) { mbsSaveError(btnEl, origLabel, mbsErr); return; }
+
+        btnEl.innerHTML = '&#9203; Uploading...';
+        SF.uploadFile(mbsScenariosFolderId, file, function(pct) {
+          btnEl.innerHTML = '&#9203; Uploading... ' + pct + '%';
+        }, function(uploadErr) {
+          if (uploadErr) { mbsSaveError(btnEl, origLabel, uploadErr); return; }
+          btnEl.innerHTML = origLabel;
+          btnEl.disabled = false;
+          showToast('Saved "' + fileName + '" to Case Documents → MBS Scenarios.', 'success');
+        });
+      });
+    });
+  });
+}
+
+function mbsSaveError(btnEl, origLabel, err) {
+  btnEl.innerHTML = origLabel;
+  btnEl.disabled = false;
+  showToast('Could not save scenario: ' + err, 'error');
 }
 
 // Format MBS currency — shows TBD for null/undefined, parentheses for negatives
@@ -2815,7 +2998,7 @@ var SF = {
 
   // Look up a folder whose name STARTS WITH any of the given prefixes (case-insensitive).
   // Use when staff naming varies slightly across matters, e.g. ShareFile templates that
-  // produce "3. CASE DOCUMENTS" on some matters and "3. CASE DOCUMENTS (Read Only)" on others.
+  // produce "CASE DOCUMENTS" on some matters and "CASE DOCUMENTS (Read Only)" on others.
   // Never creates a folder — purely a lookup.
   findFolderByPrefix: function(parentId, prefixes, callback) {
     SF.get('/Items(' + parentId + ')/Children?$select=Id,Name,ItemType', function(err, data) {
@@ -2826,6 +3009,9 @@ var SF = {
         var name = (item.Name || '').toLowerCase();
         return lowerPrefixes.some(function(p){ return name.indexOf(p) === 0; });
       });
+      console.log('[findFolderByPrefix] Looking for prefixes:', prefixes);
+      console.log('[findFolderByPrefix] Subfolders found in parent ' + parentId + ':', items.map(function(i){ return JSON.stringify(i.Name); }));
+      console.log('[findFolderByPrefix] Match:', match ? match.Name : 'NONE');
       if (!match) { callback('NOT_FOUND'); return; }
       callback(null, match.Id, match.Name);
     });
@@ -3129,14 +3315,14 @@ function loadClientUploadsHome(bodyEl, matterId) {
       return;
     }
 
-    // Find the templated "4. CLIENT'S DOCUMENT UPLOADS" folder — never created by the portal.
+    // Find the templated "CLIENT UPLOADS" folder — never created by the portal.
     SF.findFolderByPrefix(matterFolderId, API_CONFIG.clientUploadsFolderPrefixes, function(ufErr, uploadsFolderId, actualName) {
       if (!bodyEl) return;
 
       if (ufErr) {
         bodyEl.innerHTML = '<div class="card"><div class="card-body">'
           + emptyState('&#128193;', 'Document uploads not set up yet',
-              'The "4. Client\'s Document Uploads" folder could not be found for this matter. '
+              'The "Client Uploads" folder could not be found for this matter. '
               + 'Ask your attorney\'s office to confirm the ShareFile template has been applied.')
           + '</div></div>';
         return;
@@ -3671,7 +3857,10 @@ function renderSettings(el) {
 document.getElementById('sf-login-btn').addEventListener('click', handleShareFileLogin);
 document.getElementById('sf-forgot-link').addEventListener('click', function(e){
   e.preventDefault();
-  window.open('https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/forgotpassword.aspx', '_blank', 'noopener,noreferrer');
+  // ShareFile has no direct "forgot password" deep link — the client must
+  // land on the normal login page, enter their email, then click
+  // "Forgot Password?" on the screen ShareFile shows next.
+  window.open('https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/', '_blank', 'noopener,noreferrer');
 });
 document.getElementById('login-btn').addEventListener('click', handleLogin);
 document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
