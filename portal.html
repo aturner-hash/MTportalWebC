@@ -410,10 +410,10 @@ input,select,textarea{font-family:inherit}
         <div class="connection-status">
           <span class="status-dot"></span><span>Connected</span>
         </div>
-        <div id="matter-id-badge" style="display:flex;align-items:center;gap:6px;background:#EDE9E0;border:1.5px solid #D9D1C0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;user-select:none" title="Click to switch MatterId" id="matter-switcher">
-          <span style="color:#6B7280">Matter:</span>
+        <div id="matter-id-badge" style="display:flex;align-items:center;gap:6px;background:#EDE9E0;border:1.5px solid #D9D1C0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;user-select:none" title="Click to switch cases">
+          <span style="color:#6B7280">Case:</span>
           <span style="font-weight:600;color:#1B2A4A" id="topbar-matter-id">—</span>
-          <span style="color:#C9A84C;font-size:10px">&#9998;</span>
+          <span id="topbar-matter-switch-icon" style="color:#C9A84C;font-size:10px"></span>
         </div>
         <button class="icon-btn" title="Notifications">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -677,7 +677,6 @@ function showMatterPicker() {
   var cardsHtml = matters.map(function(m, idx) {
     return '<div class="matter-picker-card" data-idx="' + idx + '" style="cursor:pointer;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;background:#fff;transition:border-color .15s,box-shadow .15s;margin-bottom:12px">'
       + '<div style="font-family:var(--font-d);font-size:17px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
-      + '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Matter ID: ' + m.matterId + '</div>'
       + '<div style="margin-top:10px;font-size:12.5px;color:var(--gold-muted);font-weight:600">Open this case &#8594;</div>'
       + '</div>';
   }).join('');
@@ -725,7 +724,16 @@ function bootPortal(profile, matters, activeMatter) {
   document.getElementById('user-name').textContent        = profile.name;
   document.getElementById('user-case').textContent        = activeMatter.caseTitle || '';
   document.getElementById('user-avatar').textContent      = profile.initials;
-  document.getElementById('topbar-matter-id').textContent = activeMatter.matterId;
+  document.getElementById('topbar-matter-id').textContent = activeMatter.caseTitle || '—';
+
+  var switchIcon = document.getElementById('topbar-matter-switch-icon');
+  var badge      = document.getElementById('matter-id-badge');
+  var hasMultiple = matters && matters.length > 1;
+  if (switchIcon) switchIcon.innerHTML = hasMultiple ? '&#9998;' : '';
+  if (badge) {
+    badge.style.cursor = hasMultiple ? 'pointer' : 'default';
+    badge.title = hasMultiple ? 'Click to switch cases' : '';
+  }
 
   var picker = document.getElementById('matter-picker-screen');
   if (picker) picker.remove();
@@ -817,8 +825,7 @@ function openMatterSwitcher() {
     + matters.map(function(m, idx) {
         var isActive = currentUser.activeMatter && currentUser.activeMatter.matterId === m.matterId;
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);cursor:pointer" data-switchidx="' + idx + '">'
-          + '<div><div style="font-size:13.5px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-muted)">Matter ID: ' + m.matterId + '</div></div>'
+          + '<div style="font-size:13.5px;font-weight:600;color:var(--navy)">' + (m.caseTitle || 'Case') + '</div>'
           + (isActive ? '<span class="badge badge-success">Current</span>' : '<span style="color:var(--gold-muted);font-size:12px;font-weight:600">Open &#8594;</span>')
           + '</div>';
       }).join(''),
@@ -3956,7 +3963,11 @@ document.getElementById('matter-id-badge').addEventListener('click', function(){
     openMatterSwitcher();
     return;
   }
-  // Dev/testing fallback: manual MatterId override + flattened matter picker
+  // Single-matter real ShareFile session — nothing to switch to, badge is inert
+  if (currentUser && currentUser.profile && !currentUser.profile.email.match(/@test\.com$/i)) {
+    return;
+  }
+  // Dev/testing fallback (TEST_ACCOUNTS sessions only): manual MatterId override + flattened matter picker
   var allMatters = [];
   TEST_ACCOUNTS.forEach(function(a){
     a.matters.forEach(function(m){ allMatters.push({ accountName: a.name, matter: m }); });
