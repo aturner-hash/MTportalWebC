@@ -3087,8 +3087,13 @@ var SF = {
       if (!uploadUrl) { callback('ShareFile did not return an upload URL.'); return; }
 
       // Step 2: PUT file directly to ShareFile's upload CDN (this endpoint allows CORS)
+      // IMPORTANT: Raw:true above means ShareFile expects the literal file bytes as
+      // the POST body — NOT a multipart/form-data wrapper. Sending FormData here
+      // (as a previous version of this function did) causes ShareFile to store the
+      // raw multipart envelope itself as the file content, corrupting every upload.
       var xhr = new XMLHttpRequest();
       xhr.open('POST', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
       xhr.timeout = 120000;
 
       if (xhr.upload && onProgress) {
@@ -3104,9 +3109,7 @@ var SF = {
       xhr.onerror   = function() { callback('Upload network error.'); };
       xhr.ontimeout = function() { callback('Upload timed out.'); };
 
-      var formData = new FormData();
-      formData.append('File1', file, file.name);
-      xhr.send(formData);
+      xhr.send(file);
     });
   }
 };
