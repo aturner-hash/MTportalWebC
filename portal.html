@@ -378,11 +378,6 @@ input,select,textarea{font-family:inherit}
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke-linejoin="round"/><path d="M14 2V8H20M9 13H15M9 17H15" stroke-linecap="round"/></svg>
         <span class="nav-label">Case Documents</span>
       </a>
-      <div class="nav-section-label">Account</div>
-      <a class="nav-item" data-page="settings">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-        <span class="nav-label">Settings</span>
-      </a>
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="user-avatar">RG</div>
@@ -849,8 +844,7 @@ var pages = {
   mbs:           { label:'Marital Balance Sheet',  fn:renderMBS            },
   allfiles:      { label:'All Files',              fn:renderAllFilesPage   },
   clientuploads: { label:'Client Uploads',         fn:renderClientUploads  },
-  firmdocs:      { label:'Case Documents',         fn:renderFirmDocuments  },
-  settings:      { label:'Settings',               fn:renderSettings       }
+  firmdocs:      { label:'Case Documents',         fn:renderFirmDocuments  }
 };
 
 function navigate(page) {
@@ -907,8 +901,7 @@ function renderDashboard(el) {
     + '<button class="btn-sm btn-outline" onclick="navigate(\'allfiles\')">View All</button></div>'
     + '<div id="dash-recent-files"><div style="text-align:center;padding:20px;color:var(--text-muted)">&#128193; Loading...</div></div></div>'
     + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
-    + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
-    + '<span class="integration-badge sf">&#128193; ShareFile</span></div>';
+    + '<span class="integration-badge sf">&#128193; ShareFile Connected</span></div>';
 
   // ── Fetch case/staff info ───────────────────────────
   fetchCaseInfo(API_CONFIG.matterId, function(err, caseInfo) {
@@ -1577,7 +1570,6 @@ function buildCalendarUI(el, usingMock) {
     + '<table class="data-table"><thead><tr><th>Subject</th><th>Date</th><th>Time</th><th>Type</th></tr></thead>'
     + '<tbody>' + agendaRows + '</tbody></table></div>'
     + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">'
-    + '<span class="integration-badge azure">&#9889; Azure Connected</span>'
     + '<span class="integration-badge ' + (usingMock ? '' : 'sf') + '" style="' + (usingMock ? 'color:var(--warning);background:var(--warning-bg)' : '') + '">'
     + (usingMock ? '&#9888; Sample Data' : '&#10003; Data current as of ' + refreshTime)
     + '</span></div>';
@@ -3821,47 +3813,7 @@ function catIcon(catId) {
 function handleFiles() {} // replaced by SF upload — kept as no-op to avoid reference errors
 
 // ── SETTINGS ───────────────────────────────────────────
-function renderSettings(el) {
-  var u = (currentUser && currentUser.profile) || MockData.user;
-  el.innerHTML = '<div class="page-header"><div class="page-title">Settings</div>'
-    + '<div class="page-subtitle">Manage your account preferences and integrations.</div></div>'
-    + '<div class="grid-2">'
-    + '<div class="card"><div class="card-header"><span class="card-title">Profile</span></div><div class="card-body">'
-    + '<div class="form-group"><label>Full Name</label><input type="text" value="' + u.name + '"></div>'
-    + '<div class="form-group"><label>Email</label><input type="email" value="' + u.email + '"></div>'
-    + '<div class="form-group"><label>Phone</label><input type="tel" placeholder="(000) 000-0000"></div>'
-    + '<button class="btn-sm btn-primary" onclick="showToast(\'Profile saved\',\'success\')">Save Changes</button>'
-    + '</div></div>'
-    + '<div class="card"><div class="card-header"><span class="card-title">Integrations</span></div><div class="card-body">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border-light)">'
-    + '<div><div style="font-weight:600;font-size:14px">Microsoft Azure AD</div><div style="font-size:12px;color:var(--text-muted)">Single Sign-On</div></div>'
-    + badge('Connected', 'badge-success') + '</div>'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">'
-    + '<div><div style="font-weight:600;font-size:14px">Citrix ShareFile</div>'
-    + '<div style="font-size:12px;color:var(--text-muted)">Secure document storage</div></div>'
-    + '<div style="display:flex;align-items:center;gap:8px">'
-    + (SF.isAuthenticated()
-        ? badge('Connected', 'badge-success') + ' <button class="btn-sm btn-outline" style="font-size:12px" id="sf-disconnect">Disconnect</button>'
-        : badge('Not connected', 'badge-warning') + ' <button class="btn-sm btn-gold" style="font-size:12px" id="sf-connect-settings">Connect</button>')
-    + '</div></div>'
-    + '</div></div>'
-    + '<div class="card"><div class="card-header"><span class="card-title">Security</span></div><div class="card-body">'
-    + '<div class="form-group"><label>Current Password</label><input type="password" placeholder="••••••••"></div>'
-    + '<div class="form-group"><label>New Password</label><input type="password" placeholder="••••••••"></div>'
-    + '<div class="form-group"><label>Confirm Password</label><input type="password" placeholder="••••••••"></div>'
-    + '<button class="btn-sm btn-primary" onclick="showToast(\'Password updated\',\'success\')">Update Password</button>'
-    + '</div></div>'
-    + '</div>';
 
-  var sfDisconnect = document.getElementById('sf-disconnect');
-  var sfConnectSet = document.getElementById('sf-connect-settings');
-  if (sfDisconnect) sfDisconnect.addEventListener('click', function() {
-    SF.clearTokens();
-    showToast('Disconnected from ShareFile.', 'success');
-    renderSettings(el);
-  });
-  if (sfConnectSet) sfConnectSet.addEventListener('click', SF.redirectToAuth);
-}
 
 // ── WIRE EVENTS ────────────────────────────────────────
 document.getElementById('sf-login-btn').addEventListener('click', handleShareFileLogin);
