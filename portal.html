@@ -1213,6 +1213,95 @@ var API_CONFIG = {
   matterId: null
 };
 
+// ── HOMEWORK CHECKLIST ──────────────────────────────────
+// Maps the firm's "Initial Client Homework" document onto the 5 real
+// ShareFile subfolders inside CLIENT UPLOADS. Each category's
+// folderPrefix is matched against real ShareFile folder names the same
+// way clientUploadsFolderPrefixes works — case-insensitive "starts with",
+// never creates a folder. If a category's folder isn't found, that
+// category is simply omitted from the checklist (rather than erroring),
+// since not every matter type necessarily uses all 5 categories.
+//
+// Each item's `label` is shown to the client; `helper` is the parenthetical
+// guidance from the original homework document. Items are NOT separate
+// ShareFile folders — all items in a category share that category's single
+// folder. The uploaded filename is prefixed with the item label so staff
+// can tell items apart at a glance without opening each file.
+var HOMEWORK_CHECKLIST = [
+  {
+    id: 'income',
+    folderPrefix: 'documents for income',
+    icon: '💵',
+    items: [
+      { label: 'Employment Benefits', helper: 'e.g. phone, car, house, meals, etc.' },
+      { label: 'IRS Form 4506', helper: 'Sign authorization to request complete copies of your tax returns' },
+      { label: 'Paystubs / Evidence of Income', helper: 'Most recent, year-end from last year, and the last 12 months' },
+      { label: 'Rental Income and Expense', helper: 'Documentation for the last 12 months' },
+      { label: 'Self-Employment Income', helper: 'Documentation for the last 12 months' },
+      { label: 'Social Security, Disability, and Retirement Payments / Benefits', helper: 'Received in the last 12 months' },
+      { label: 'SS Benefits Letter and Annual Statement', helper: 'Most recent' },
+      { label: 'Statement of the Amount and Source of All Income', helper: 'Last 12 months, if not apparent from paystubs' },
+      { label: 'Supporting Tax Documents', helper: 'Last three years — e.g. W2, 1099, K1, SSDI, Trust, Rentals, 1099-SS' },
+      { label: 'Tax Returns', helper: 'Last three years' }
+    ]
+  },
+  {
+    id: 'financials',
+    folderPrefix: 'financials',
+    icon: '🏦',
+    items: [
+      { label: 'Bank Account(s)', helper: 'Last 12 months of statements for all accounts, individual or joint' },
+      { label: 'Credit Card(s)', helper: 'Last 12 months of statements for all accounts, individual or joint' },
+      { label: 'Insurance Policy Declaration Pages', helper: '' },
+      { label: 'Life Insurance', helper: 'Most recent proof of premium payments' },
+      { label: 'Loan or Credit Applications', helper: 'Made in the last three years' },
+      { label: 'Major Debts', helper: 'e.g. car, mortgage, personal loans, etc.' },
+      { label: 'Marital Agreements', helper: 'e.g. prenuptial, postnuptial — all years' },
+      { label: 'Retirement / Investment', helper: 'e.g. IRA, 401(k), pension, mutual fund' },
+      { label: 'Stocks, Bonds, RSUs, Stock Options', helper: 'And/or other similar assets' }
+    ]
+  },
+  {
+    id: 'business',
+    folderPrefix: 'business ownership',
+    icon: '💼',
+    items: [
+      { label: 'Accounts Receivable and Payable', helper: 'Last 12 months' },
+      { label: 'Annual Profit & Loss Statement and Balance Sheet', helper: 'Last three years and current year-to-date' },
+      { label: 'Business Bank Account(s) and Credit Card(s) Statements', helper: 'Last 12 months' },
+      { label: 'Business Tax Returns', helper: 'Last three years, including attachments' },
+      { label: 'Current Loans and Payables', helper: 'Statement of current loans/payables you owe to the business, or it owes to you' },
+      { label: 'Evaluations or Appraisals of the Business', helper: 'Including your ownership, made in the last three years' },
+      { label: 'Evidence of Business Ownership', helper: '' },
+      { label: 'Financial Statements', helper: 'Quarterly/monthly for the last 12 months and current year-to-date — e.g. income statements, cash flow statements, general ledgers' }
+    ]
+  },
+  {
+    id: 'children',
+    folderPrefix: 'costs related to children',
+    icon: '👨‍👩‍👧',
+    items: [
+      { label: 'Copy of all Child Support Orders', helper: 'Court orders and proof of payments — made to you or by you' },
+      { label: 'Education', helper: 'Private school and/or tutoring' },
+      { label: 'Extracurricular Activities', helper: '' },
+      { label: 'Health Care Expenses', helper: 'Not covered by insurance' },
+      { label: 'Health, Dental, and/or Vision Insurance', helper: 'You + kids plan vs. individual plan' },
+      { label: 'Other Minor Children', helper: 'Expense documentation for child(ren) you legally support' },
+      { label: 'Summary Statement of Child(ren) Expenses', helper: 'For this action — include supporting documentation' },
+      { label: 'Travel Expenses', helper: 'For exercising parenting/visitation with child(ren)' },
+      { label: 'Work-Related Childcare', helper: 'School year and summer' }
+    ]
+  },
+  {
+    id: 'other',
+    folderPrefix: 'other documents',
+    icon: '📎',
+    items: [
+      { label: 'Other Document', helper: 'Anything not covered by the categories above' }
+    ]
+  }
+];
+
 // Cache so we don't re-fetch on every month navigation
 var AppointmentCache = { data: null, matterId: null };
 
@@ -3380,11 +3469,11 @@ function loadClientUploadsHome(bodyEl, matterId) {
         if (!bodyEl) return;
         if (listErr) { bodyEl.innerHTML = sfErrorHtml(listErr); return; }
 
-        var categoryFolders = (items || []).filter(sfIsFolder).sort(function(a, b) {
+        var realFolders = (items || []).filter(sfIsFolder).sort(function(a, b) {
           return naturalSort(a.Name, b.Name);
         });
 
-        if (!categoryFolders.length) {
+        if (!realFolders.length) {
           bodyEl.innerHTML = '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
             + '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block"></span>'
             + 'Connected to ShareFile &mdash; Folder: <strong style="color:var(--navy)">' + actualName + '</strong></div>'
@@ -3393,6 +3482,17 @@ function loadClientUploadsHome(bodyEl, matterId) {
             + '</div></div>';
           return;
         }
+
+        // Match each real folder against the homework checklist by name prefix.
+        // Folders that don't match any known category still render as plain
+        // generic folder cards (today's behavior) so nothing silently disappears.
+        var categoryFolders = realFolders.map(function(folder) {
+          var lowerName = (folder.Name || '').toLowerCase();
+          var matchedCategory = HOMEWORK_CHECKLIST.find(function(cat) {
+            return lowerName.indexOf(cat.folderPrefix) === 0;
+          });
+          return { folder: folder, category: matchedCategory || null };
+        });
 
         bodyEl.innerHTML =
           '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:16px">'
@@ -3414,12 +3514,13 @@ function loadClientUploadsHome(bodyEl, matterId) {
           + '<span id="sf-prog-pct" style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--navy);min-width:44px;text-align:right">0%</span>'
           + '</div>'
           + '<div id="sf-prog-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'
-          + categoryFolders.map(function(f) {
+          + categoryFolders.map(function(cf) {
+              var f = cf.folder;
               return '<div id="sf-prog-cat-' + f.Id + '" title="' + f.Name + '" '
                 + 'style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;'
                 + 'border:1px solid var(--border);background:var(--parchment);font-size:11.5px;color:var(--text-muted)">'
                 + '<span id="sf-prog-dot-' + f.Id + '" style="width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;display:inline-block"></span>'
-                + '<span style="white-space:nowrap">' + f.Name + '</span>'
+                + '<span style="white-space:nowrap">' + (cf.category ? cf.category.icon + ' ' : '') + f.Name + '</span>'
                 + '</div>';
             }).join('')
           + '</div>'
@@ -3432,7 +3533,7 @@ function loadClientUploadsHome(bodyEl, matterId) {
           + '<span style="font-size:12px;color:var(--text-muted)">Upload documents requested by your attorney</span>'
           + '</div>'
           + '<div id="sf-categories" style="padding:12px 16px">'
-          + categoryFolders.map(function(f) { return buildCategoryCard(f); }).join('')
+          + categoryFolders.map(function(cf) { return buildCategoryCard(cf.folder, cf.category); }).join('')
           + '</div></div>';
 
         // ── Progress tracker ──────────────────────
@@ -3492,8 +3593,8 @@ function loadClientUploadsHome(bodyEl, matterId) {
         };
 
         // Wire each category card's upload zone + load its files
-        categoryFolders.forEach(function(f) {
-          wireCategoryCard(f, bodyEl);
+        categoryFolders.forEach(function(cf) {
+          wireCategoryCard(cf.folder, cf.category, bodyEl);
         });
       });
     });
@@ -3510,38 +3611,71 @@ function toggleCollapsible(headerEl, bodyId) {
   return !isOpen;
 }
 
-function buildCategoryCard(folder) {
-  return '<div class="sf-category" id="sfcat-' + folder.Id + '">'
-    + '<div class="sf-category-header" data-catid="' + folder.Id + '">'
-    + '<span style="font-size:18px">&#128193;</span>'
+function buildCategoryCard(folder, category) {
+  var icon = category ? category.icon : '&#128193;';
+  var headerHtml = '<div class="sf-category-header" data-catid="' + folder.Id + '">'
+    + '<span style="font-size:18px">' + icon + '</span>'
     + '<span class="sf-category-label">' + folder.Name + '</span>'
     + '<span class="sf-category-count" id="sfcount-' + folder.Id + '">Loading...</span>'
     + '<span style="color:var(--text-muted);font-size:12px;margin-left:8px">&#9654;</span>'
-    + '</div>'
+    + '</div>';
+
+  if (!category) {
+    // No matching homework category — fall back to the plain single dropzone.
+    return '<div class="sf-category" id="sfcat-' + folder.Id + '">'
+      + headerHtml
+      + '<div class="sf-category-body" id="sfbody-' + folder.Id + '">'
+      + '<div style="padding:12px 16px;border-top:1px solid var(--border-light)">'
+      + '<input type="file" id="sfinput-' + folder.Id + '" multiple style="display:none">'
+      + '<div id="sfzone-' + folder.Id + '" class="upload-zone" style="padding:20px;margin-bottom:10px">'
+      + '<div class="upload-icon" style="font-size:24px">&#128196;</div>'
+      + '<div class="upload-text" style="font-size:13px">Drop files here or <span style="color:var(--gold-muted);font-weight:600;cursor:pointer">browse</span></div>'
+      + '</div>'
+      + '<div id="sffiles-' + folder.Id + '"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px">Loading files in this folder...</div></div>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // Matched to a homework category — render each specific item with its own
+  // mini dropzone + file list, all sharing this one ShareFile folder.
+  var itemsHtml = category.items.map(function(item, idx) {
+    var itemId = folder.Id + '-' + idx;
+    return '<div class="hw-item" style="border-bottom:1px solid var(--border-light);padding:12px 0">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:13.5px;font-weight:600;color:var(--navy)">' + item.label + '</div>'
+      + (item.helper ? '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + item.helper + '</div>' : '')
+      + '</div>'
+      + '<span class="hw-item-count" id="hwcount-' + itemId + '" style="font-size:11.5px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">Loading...</span>'
+      + '</div>'
+      + '<input type="file" id="hwinput-' + itemId + '" multiple style="display:none">'
+      + '<div id="hwzone-' + itemId + '" class="upload-zone" style="padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
+      + '<span style="font-size:16px">&#128196;</span>'
+      + '<span style="font-size:12.5px;color:var(--slate)">Drop files here or <span style="color:var(--gold-muted);font-weight:600;cursor:pointer">browse</span></span>'
+      + '</div>'
+      + '<div id="hwfiles-' + itemId + '"></div>'
+      + '</div>';
+  }).join('');
+
+  return '<div class="sf-category" id="sfcat-' + folder.Id + '">'
+    + headerHtml
     + '<div class="sf-category-body" id="sfbody-' + folder.Id + '">'
-    + '<div style="padding:12px 16px;border-top:1px solid var(--border-light)">'
-    + '<input type="file" id="sfinput-' + folder.Id + '" multiple style="display:none">'
-    + '<div id="sfzone-' + folder.Id + '" class="upload-zone" style="padding:20px;margin-bottom:10px">'
-    + '<div class="upload-icon" style="font-size:24px">&#128196;</div>'
-    + '<div class="upload-text" style="font-size:13px">Drop files here or <span style="color:var(--gold-muted);font-weight:600;cursor:pointer">browse</span></div>'
-    + '</div>'
-    + '<div id="sffiles-' + folder.Id + '"><div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px">Loading files in this folder...</div></div>'
+    + '<div style="padding:4px 16px 12px;border-top:1px solid var(--border-light)">'
+    + itemsHtml
     + '</div>'
     + '</div>'
     + '</div>';
 }
 
-function wireCategoryCard(folder, pageEl) {
+function wireCategoryCard(folder, category, pageEl) {
   var header   = document.querySelector('.sf-category-header[data-catid="' + folder.Id + '"]');
   var body     = document.getElementById('sfbody-' + folder.Id);
-  var zone     = document.getElementById('sfzone-' + folder.Id);
-  var input    = document.getElementById('sfinput-' + folder.Id);
   var arrow    = header ? header.querySelector('span:last-child') : null;
-  if (!header || !body || !zone || !input) return;
+  if (!header || !body) return;
 
   // Folder already exists in ShareFile — just load its files. Never created here.
   FileCache.folders[folder.Id] = folder.Id;
-  refreshCategoryFiles(folder);
 
   // Toggle open/close
   header.addEventListener('click', function() {
@@ -3550,18 +3684,51 @@ function wireCategoryCard(folder, pageEl) {
     if (arrow) arrow.innerHTML = isOpen ? '&#9654;' : '&#9660;';
   });
 
-  // Drop zone
-  zone.addEventListener('click', function() { input.click(); });
-  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
-  zone.addEventListener('drop', function(e) {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    uploadToCategory(folder, Array.from(e.dataTransfer.files));
+  if (!category) {
+    // Plain single dropzone — same behavior as before for unmatched folders.
+    var zone  = document.getElementById('sfzone-' + folder.Id);
+    var input = document.getElementById('sfinput-' + folder.Id);
+    if (!zone || !input) return;
+
+    refreshCategoryFiles(folder);
+
+    zone.addEventListener('click', function() { input.click(); });
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      uploadToCategory(folder, Array.from(e.dataTransfer.files));
+    });
+    input.addEventListener('change', function() {
+      uploadToCategory(folder, Array.from(this.files));
+      this.value = '';
+    });
+    return;
+  }
+
+  // Matched to a homework category — wire each item's own mini dropzone,
+  // all uploading into this same shared folder with a prefixed filename.
+  category.items.forEach(function(item, idx) {
+    var itemId = folder.Id + '-' + idx;
+    var zone   = document.getElementById('hwzone-' + itemId);
+    var input  = document.getElementById('hwinput-' + itemId);
+    if (!zone || !input) return;
+
+    zone.addEventListener('click', function() { input.click(); });
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      uploadToHomeworkItem(folder, category, idx, Array.from(e.dataTransfer.files));
+    });
+    input.addEventListener('change', function() {
+      uploadToHomeworkItem(folder, category, idx, Array.from(this.files));
+      this.value = '';
+    });
   });
-  input.addEventListener('change', function() {
-    uploadToCategory(folder, Array.from(this.files));
-    this.value = '';
-  });
+
+  // Load the folder's files once, then distribute into each item's bucket
+  refreshHomeworkCategoryFiles(folder, category);
 }
 
 function uploadToCategory(folder, files) {
@@ -3655,6 +3822,164 @@ function refreshCategoryFiles(folder) {
           window.open(url, '_blank', 'noopener,noreferrer');
           self.textContent = '↓ Download';
         });
+      });
+    });
+  });
+}
+
+// ── HOMEWORK CHECKLIST — per-item upload helpers ───────
+// Builds the filename prefix used to tag which checklist item a file
+// answers, e.g. "Tax Returns -- 2023_Form1040.pdf". Sanitizes the item
+// label so it's safe as a filename prefix (no slashes, colons, etc.).
+function homeworkFilePrefix(itemLabel) {
+  return itemLabel.replace(/[\/\\:*?"<>|]/g, '').trim() + ' -- ';
+}
+
+function uploadToHomeworkItem(folder, category, itemIdx, files) {
+  if (!files || !files.length) return;
+  var item = category.items[itemIdx];
+  var itemId = folder.Id + '-' + itemIdx;
+  var prefix = homeworkFilePrefix(item.label);
+
+  files.forEach(function(file) {
+    var progressId = 'hwprog-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    var filesEl = document.getElementById('hwfiles-' + itemId);
+    if (filesEl) {
+      var progRow = document.createElement('div');
+      progRow.id = progressId;
+      progRow.className = 'sf-file-row';
+      progRow.style.padding = '6px 0';
+      progRow.innerHTML = '<span style="font-size:16px">' + fileIcon(file.name) + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + file.name + '</div>'
+        + '<div class="sf-progress"><div class="sf-progress-bar" id="' + progressId + '-bar"></div></div>'
+        + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="' + progressId + '-status">Uploading...</div>'
+        + '</div>';
+      filesEl.insertBefore(progRow, filesEl.firstChild);
+    }
+
+    // Rename the file with the item prefix so staff can identify which
+    // checklist item this answers without opening it. Re-wraps the same
+    // bytes in a new File object with the prefixed name.
+    var prefixedFile = new File([file], prefix + file.name, { type: file.type });
+
+    SF.uploadFile(folder.Id, prefixedFile,
+      function(pct) {
+        var bar = document.getElementById(progressId + '-bar');
+        var status = document.getElementById(progressId + '-status');
+        if (bar) bar.style.width = pct + '%';
+        if (status) status.textContent = pct + '% uploaded...';
+      },
+      function(err) {
+        var progEl = document.getElementById(progressId);
+        if (err) {
+          showToast('Upload failed: ' + err, 'error');
+          if (progEl) progEl.remove();
+        } else {
+          showToast('"' + file.name + '" uploaded for ' + item.label + '.', 'success');
+          if (progEl) progEl.remove();
+          refreshHomeworkCategoryFiles(folder, category);
+        }
+      }
+    );
+  });
+}
+
+function refreshHomeworkCategoryFiles(folder, category) {
+  var countEl = document.getElementById('sfcount-' + folder.Id);
+
+  SF.listFolder(folder.Id, function(err, items) {
+    if (err) {
+      if (countEl) { countEl.textContent = 'Error'; countEl.style.color = 'var(--danger)'; }
+      return;
+    }
+
+    var files = (items || []).filter(sfIsFile);
+    if (countEl) {
+      countEl.textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
+      countEl.style.color = files.length === 0 ? 'var(--danger)' : 'var(--text-muted)';
+    }
+
+    // Report category-level status (has at least one file anywhere) to the progress tracker
+    if (FileCache.reportCategoryStatus) {
+      FileCache.reportCategoryStatus(folder.Id, files.length > 0);
+    }
+
+    // Distribute files into each item's bucket by filename prefix.
+    // Files that don't match any item's prefix (e.g. uploaded before this
+    // feature existed, or staff-added files) fall into a final "Other files
+    // in this folder" bucket so nothing uploaded is ever hidden from view.
+    var matchedIds = {};
+    category.items.forEach(function(item, idx) {
+      var itemId = folder.Id + '-' + idx;
+      var prefix = homeworkFilePrefix(item.label);
+      var itemFiles = files.filter(function(f) { return f.Name.indexOf(prefix) === 0; });
+      itemFiles.forEach(function(f) { matchedIds[f.Id] = true; });
+
+      var countSpan = document.getElementById('hwcount-' + itemId);
+      var filesDiv  = document.getElementById('hwfiles-' + itemId);
+      if (countSpan) {
+        countSpan.textContent = itemFiles.length ? '✓ ' + itemFiles.length + ' file' + (itemFiles.length !== 1 ? 's' : '') : 'No files yet';
+        countSpan.style.color = itemFiles.length ? 'var(--success)' : 'var(--text-muted)';
+      }
+      if (filesDiv) {
+        filesDiv.innerHTML = itemFiles.sort(function(a,b){ return naturalSort(a.Name, b.Name); }).map(function(f) {
+          return homeworkFileRow(f, prefix);
+        }).join('');
+        wireHomeworkDownloadButtons(filesDiv);
+      }
+    });
+
+    // Catch-all for unmatched files (e.g. legacy uploads, or staff-added docs)
+    var unmatched = files.filter(function(f) { return !matchedIds[f.Id]; });
+    var catchAllId = 'hwother-' + folder.Id;
+    var existingCatchAll = document.getElementById(catchAllId);
+    if (existingCatchAll) existingCatchAll.remove();
+
+    if (unmatched.length) {
+      var bodyContainer = document.getElementById('sfbody-' + folder.Id);
+      var categoriesContainer = bodyContainer ? bodyContainer.querySelector('div') : null;
+      if (categoriesContainer) {
+        var catchAllDiv = document.createElement('div');
+        catchAllDiv.id = catchAllId;
+        catchAllDiv.style.cssText = 'padding:12px 0;border-top:1px dashed var(--border-light);margin-top:4px';
+        catchAllDiv.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">Other files in this folder</div>'
+          + unmatched.sort(function(a,b){ return naturalSort(a.Name, b.Name); }).map(function(f) { return homeworkFileRow(f, ''); }).join('');
+        categoriesContainer.appendChild(catchAllDiv);
+        wireHomeworkDownloadButtons(catchAllDiv);
+      }
+    }
+  });
+}
+
+// Renders one file row, stripping the item prefix from the displayed name
+// (the prefix is internal bookkeeping, not something the client needs to see twice).
+function homeworkFileRow(f, prefixToStrip) {
+  var displayName = prefixToStrip && f.Name.indexOf(prefixToStrip) === 0
+    ? f.Name.slice(prefixToStrip.length)
+    : f.Name;
+  var size = f.FileSizeBytes ? Math.round(f.FileSizeBytes / 1024) + ' KB' : '';
+  var date = f.CreationDate ? new Date(f.CreationDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+  return '<div class="sf-file-row" style="padding:6px 0">'
+    + '<span style="font-size:16px">' + fileIcon(f.Name) + '</span>'
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + displayName + '</div>'
+    + '<div style="font-size:11px;color:var(--text-muted)">' + date + (size ? ' &middot; ' + size : '') + '</div>'
+    + '</div>'
+    + '<button class="btn-sm btn-outline" style="font-size:11px;flex-shrink:0;padding:4px 8px" data-fileid="' + f.Id + '">&#8595;</button>'
+    + '</div>';
+}
+
+function wireHomeworkDownloadButtons(container) {
+  container.querySelectorAll('button[data-fileid]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.dataset.fileid;
+      this.innerHTML = '&#9203;';
+      var self = this;
+      SF.getDownloadUrl(id, function(err, url) {
+        if (err) { showToast('Could not get download link: ' + err, 'error'); self.innerHTML = '&#8595;'; return; }
+        window.open(url, '_blank', 'noopener,noreferrer');
+        self.innerHTML = '&#8595;';
       });
     });
   });
