@@ -435,6 +435,16 @@ input,select,textarea{font-family:inherit}
 
 <script>
 
+// ── DEV MODE FLAG ───────────────────────────────────────
+// Controls whether the developer bypass panel (test accounts + manual
+// MatterId override) renders on the login screen at all. Sourced from
+// config.js so this file never needs hand-editing between environments —
+// set window.MT_CONFIG.devMode = true in your local/GitHub Pages config.js,
+// and leave it false (or omit it) in the production config.js on S3.
+// When false, the dev panel HTML is removed from the DOM entirely on load,
+// not just hidden with CSS, so it can't be revealed via DevTools either.
+var MT_DEV_MODE = !!(window.MT_CONFIG && window.MT_CONFIG.devMode);
+
 // ── MOCK DATA ──────────────────────────────────────────
 var MockData = {
   user: {
@@ -748,14 +758,18 @@ function handleLogout() {
   document.getElementById('portal-layout').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
   hideLoginLoading();
-  document.getElementById('email').value    = '';
-  document.getElementById('password').value = '';
+  var emailEl = document.getElementById('email');
+  var passwordEl = document.getElementById('password');
+  if (emailEl) emailEl.value = '';
+  if (passwordEl) passwordEl.value = '';
 }
 
 // ── DEV BYPASS — test accounts panel, local testing only ──
 // Builds the same currentUser shape as the real ShareFile flow so the
 // rest of the portal behaves identically regardless of login path.
 function handleLogin() {
+  if (!MT_DEV_MODE) return; // inert in production regardless of how it's invoked
+
   var email = document.getElementById('email').value.trim().toLowerCase();
   var pass  = document.getElementById('password').value;
   var err   = document.getElementById('login-error');
@@ -849,6 +863,31 @@ var pages = {
 
 function navigate(page) {
   if (!pages[page]) return;
+
+  // Guard: refuse to render if the active matterId isn't actually one of
+  // this authenticated client's own matters. This catches direct console
+  // tampering with API_CONFIG.matterId — it does NOT replace server-side
+  // authorization, since a determined attacker can still call the data
+  // fetch functions directly bypassing navigate() entirely. Real protection
+  // requires each Logic App to verify (email, matterId) ownership itself.
+  if (currentUser && currentUser.matters && currentUser.matters.length) {
+    var ownsMatter = currentUser.matters.some(function(m) {
+      return String(m.matterId) === String(API_CONFIG.matterId);
+    });
+    if (!ownsMatter) {
+      console.error('[Security] Blocked render: matterId ' + API_CONFIG.matterId + ' is not in this client\'s authorized matter list.');
+      showToast('That case could not be loaded. Reloading your account...', 'error');
+      // Snap back to a matter this client actually owns rather than rendering
+      if (currentUser.activeMatter && currentUser.matters.some(function(m){ return String(m.matterId) === String(currentUser.activeMatter.matterId); })) {
+        API_CONFIG.matterId = currentUser.activeMatter.matterId;
+      } else {
+        API_CONFIG.matterId = currentUser.matters[0].matterId;
+        currentUser.activeMatter = currentUser.matters[0];
+      }
+      clearCaches();
+    }
+  }
+
   document.querySelectorAll('.nav-item').forEach(function(el){
     el.classList.toggle('active', el.dataset.page === page);
   });
@@ -1073,10 +1112,12 @@ function renderDashboard(el) {
   });
 }
 
-// ── TEST ACCOUNTS ──────────────────────────────────────
-// Add as many rows as you need. Password is always "test" for all of them.
-// In production, remove this block and replace handleLogin with real auth.
-var TEST_ACCOUNTS = [
+// ── TEST ACCOUNTS (dev mode only) ──────────────────────
+// Contains real ShareFile folder IDs for dev testing — must never ship to
+// production. Empty in production (MT_DEV_MODE false) so this data and the
+// handleLogin() bypass below are inert even if called directly from the
+// console; there is nothing here for an attacker to find or use.
+var TEST_ACCOUNTS = MT_DEV_MODE ? [
   { name:'Rachel Geller', initials:'RG', email:'rachel.geller@test.com', password:'test', matters: [
       { matterId:9827,  caseTitle:'Geller v. Geller',      homeFolderId:'fo58f4d2-1fea-4843-9ed2-f563d92b9e71' },
       { matterId:10285, caseTitle:'Geller — Estate Matter', homeFolderId:'fo090122-f433-481a-aea8-25a7cd29aa3d' }
@@ -1086,7 +1127,7 @@ var TEST_ACCOUNTS = [
       { matterId:99999, caseTitle:'Dev Override', homeFolderId:null }
     ]
   }
-];
+] : [];
 
 // ── API CONFIGURATION ──────────────────────────────────
 // All Logic App URLs (and the ShareFile proxy URL) are loaded from config.js,
@@ -2323,10 +2364,10 @@ function renderMBS(el) {
         totalOP      += effectiveOPValue(r, idx);
       });
 
-      // Tiles
-      document.getElementById('mbs-tile-marital').textContent = fmt$(totalMarital);
-      document.getElementById('mbs-tile-client').textContent  = fmt$(totalClient);
-      document.getElementById('mbs-tile-op').textContent      = fmt$(totalOP);
+      // Top summary tiles intentionally NOT updated here — they show the
+      // official, as-of-load totals and stay static while the client
+      // experiments with scenario percentages below. Only the scenario
+      // banner reflects live "what if" numbers.
 
       // Scenario banner
       document.getElementById('mbs-scen-marital').textContent = fmt$(totalMarital);
@@ -2693,12 +2734,12 @@ function showMBSDetail(r, scenarioPct) {
     + row('Ownership',                ownershipBadge(r['Ownership']))
     + row('Separate Property Owner',  ownershipBadge(r['Separate Property Ownership']))
     + row('Valuation Date',           valDate)
-    + '<tr><td colspan="2" style="padding:6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Values</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 14px;background:var(--parchment);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Values</td></tr>'
     + row('Total Value',              fmtMBS(r['Total Value']))
     + row('Debt Amount',              fmtMBS(r['Debt Amount']))
     + row('Separate Property Amount', fmtMBS(r['Separate Property Amount']))
     + row('Marital Value',            fmtMBS(mv), 'font-weight:600')
-    + '<tr><td colspan="2" style="padding:6px 0;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Distribution</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 14px;background:var(--parchment);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-light)">Distribution</td></tr>'
     + allocationRow
     + row('Client Share',             fmtMBS(cmv), 'color:var(--success);font-weight:600')
     + row('Opposing Party Share',     fmtMBS(omv), 'color:var(--warning);font-weight:600')
@@ -3824,9 +3865,15 @@ document.getElementById('sf-forgot-link').addEventListener('click', function(e){
   // "Forgot Password?" on the screen ShareFile shows next.
   window.open('https://' + API_CONFIG.shareFile.subdomain + '.sharefile.com/', '_blank', 'noopener,noreferrer');
 });
-document.getElementById('login-btn').addEventListener('click', handleLogin);
-document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
-document.getElementById('email').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('password').focus(); });
+// These elements live inside the dev panel and are removed from the DOM
+// entirely in production (MT_DEV_MODE false) — guard against null so this
+// wiring doesn't throw and block everything after it from running.
+var devLoginBtn  = document.getElementById('login-btn');
+var devPasswordEl = document.getElementById('password');
+var devEmailEl    = document.getElementById('email');
+if (devLoginBtn)   devLoginBtn.addEventListener('click', handleLogin);
+if (devPasswordEl) devPasswordEl.addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
+if (devEmailEl)    devEmailEl.addEventListener('keydown', function(e){ if(e.key==='Enter') devPasswordEl.focus(); });
 document.getElementById('collapse-btn').addEventListener('click', toggleSidebar);
 document.getElementById('mobile-menu-btn').addEventListener('click', toggleSidebar);
 document.getElementById('logout-btn').addEventListener('click', handleLogout);
@@ -3851,6 +3898,14 @@ sfHandleStartup(function(justAuthed) {
 });
 
 // ── DEV PANEL ──────────────────────────────────────────
+// Entirely gated behind MT_DEV_MODE (set via config.js). When off, the
+// panel's DOM node is removed outright — not just hidden — so it can't
+// be revealed via DevTools, and none of its JS wiring (including the
+// TEST_ACCOUNTS login bypass) ever runs.
+if (!MT_DEV_MODE) {
+  var devPanelEl = document.getElementById('dev-panel');
+  if (devPanelEl) devPanelEl.remove();
+} else {
 
 // Toggle collapse
 document.getElementById('dev-panel-toggle').addEventListener('click', function(){
@@ -3907,6 +3962,8 @@ document.getElementById('dev-matter-go').addEventListener('click', function(){
 document.getElementById('dev-matter-id').addEventListener('keydown', function(e){
   if (e.key === 'Enter') document.getElementById('dev-matter-go').click();
 });
+
+} // end MT_DEV_MODE block
 
 // ── TOP BAR MATTER SWITCHER ────────────────────────────
 document.getElementById('matter-id-badge').addEventListener('click', function(){
