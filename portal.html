@@ -366,10 +366,6 @@ input,select,textarea{font-family:inherit}
         <span class="nav-label">Marital Balance Sheet</span>
       </a>
       <div class="nav-section-label">Documents</div>
-      <a class="nav-item" data-page="allfiles">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19C22 20.1 21.1 21 20 21H4C2.9 21 2 20.1 2 19V5C2 3.9 2.9 3 4 3H9L11 6H20C21.1 6 22 6.9 22 8V19Z"/></svg>
-        <span class="nav-label">All Files</span>
-      </a>
       <a class="nav-item" data-page="clientuploads">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="nav-label">Client Uploads</span>
@@ -377,6 +373,10 @@ input,select,textarea{font-family:inherit}
       <a class="nav-item" data-page="firmdocs">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke-linejoin="round"/><path d="M14 2V8H20M9 13H15M9 17H15" stroke-linecap="round"/></svg>
         <span class="nav-label">Case Documents</span>
+      </a>
+      <a class="nav-item" data-page="allfiles">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19C22 20.1 21.1 21 20 21H4C2.9 21 2 20.1 2 19V5C2 3.9 2.9 3 4 3H9L11 6H20C21.1 6 22 6.9 22 8V19Z"/></svg>
+        <span class="nav-label">All Files</span>
       </a>
     </nav>
     <div class="sidebar-user">
@@ -3537,14 +3537,25 @@ function loadClientUploadsHome(bodyEl, matterId) {
           + '</div></div>';
 
         // ── Progress tracker ──────────────────────
-        var total    = categoryFolders.length;
-        var catStatus = {}; // folderId → true (has files) | false (empty)
-        var resolved  = 0;
+        // Counts individual checklist ITEMS, not whole folders — uploading
+        // one file to a 10-item category should move the bar by 1/38, not
+        // mark that entire category complete.
+        var total = 0;
+        categoryFolders.forEach(function(cf) {
+          total += cf.category ? cf.category.items.length : 1;
+        });
+
+        var catStatus  = {}; // folderId → { filled: n, total: n } for matched categories, or true/false for unmatched
+        var resolved   = 0;  // folders that have reported in at least once
 
         function updateProgress() {
-          var filled = Object.keys(catStatus).filter(function(k){ return catStatus[k]; }).length;
+          var filled = 0;
+          Object.keys(catStatus).forEach(function(k) {
+            var s = catStatus[k];
+            filled += (typeof s === 'object') ? s.filled : (s ? 1 : 0);
+          });
           var pct    = total > 0 ? Math.round((filled / total) * 100) : 0;
-          var allDone = resolved === total && filled === total;
+          var allDone = resolved === categoryFolders.length && filled === total;
 
           var bar   = document.getElementById('sf-prog-bar');
           var pctEl = document.getElementById('sf-prog-pct');
@@ -3561,33 +3572,50 @@ function loadClientUploadsHome(bodyEl, matterId) {
           pctEl.textContent = pct + '%';
           pctEl.style.color = allDone ? 'var(--success)' : 'var(--navy)';
 
-          if (resolved < total) {
-            label.textContent = 'Checking folders (' + resolved + ' of ' + total + ')...';
+          if (resolved < categoryFolders.length) {
+            label.textContent = 'Checking folders (' + resolved + ' of ' + categoryFolders.length + ')...';
           } else if (allDone) {
             label.innerHTML = '<span style="color:var(--success);font-weight:600">&#10003; All documents submitted!</span>';
           } else {
-            label.textContent = filled + ' of ' + total + ' folders have files';
+            label.textContent = filled + ' of ' + total + ' items have files';
           }
         }
 
-        // Expose updater so category cards can call it after file count resolves
-        FileCache.reportCategoryStatus = function(folderId, hasFiles) {
-          catStatus[folderId] = hasFiles;
+        // Called once per folder with item-level detail: filled = how many
+        // of that folder's checklist items have at least one file,
+        // itemTotal = how many items that folder has (1 for unmatched
+        // generic folders, since they have no items, just a single dropzone).
+        FileCache.reportCategoryStatus = function(folderId, filled, itemTotal) {
+          // Back-compat: a plain boolean means an unmatched folder reporting
+          // via the old single dropzone path — treat as 1 item, filled 0 or 1.
+          if (typeof filled === 'boolean') {
+            catStatus[folderId] = filled;
+          } else {
+            catStatus[folderId] = { filled: filled, total: itemTotal };
+          }
           resolved++;
           updateProgress();
 
           var dot  = document.getElementById('sf-prog-dot-' + folderId);
           var pill = document.getElementById('sf-prog-cat-' + folderId);
           if (dot && pill) {
-            if (hasFiles) {
+            var isFull  = (typeof catStatus[folderId] === 'object') ? (filled === itemTotal && itemTotal > 0) : filled;
+            var isEmpty = (typeof catStatus[folderId] === 'object') ? (filled === 0) : !filled;
+            if (isFull) {
               dot.style.background = 'var(--success)';
               pill.style.borderColor = 'var(--success)';
               pill.style.background = 'var(--success-bg)';
               pill.style.color = 'var(--success)';
-            } else {
+            } else if (isEmpty) {
               dot.style.background = 'var(--danger)';
               pill.style.borderColor = 'var(--danger)';
               pill.style.color = 'var(--danger)';
+            } else {
+              // Partially complete — gold, distinct from both done and empty
+              dot.style.background = 'var(--gold)';
+              pill.style.borderColor = 'var(--gold)';
+              pill.style.background = '#FFFBF0';
+              pill.style.color = 'var(--gold-muted)';
             }
           }
         };
@@ -3900,21 +3928,20 @@ function refreshHomeworkCategoryFiles(folder, category) {
       countEl.style.color = files.length === 0 ? 'var(--danger)' : 'var(--text-muted)';
     }
 
-    // Report category-level status (has at least one file anywhere) to the progress tracker
-    if (FileCache.reportCategoryStatus) {
-      FileCache.reportCategoryStatus(folder.Id, files.length > 0);
-    }
-
-    // Distribute files into each item's bucket by filename prefix.
+    // Distribute files into each item's bucket by filename prefix, and
+    // count how many items have at least one file — THIS is what drives
+    // the progress bar, not just whether the folder has any file at all.
     // Files that don't match any item's prefix (e.g. uploaded before this
     // feature existed, or staff-added files) fall into a final "Other files
     // in this folder" bucket so nothing uploaded is ever hidden from view.
     var matchedIds = {};
+    var itemsFilledCount = 0;
     category.items.forEach(function(item, idx) {
       var itemId = folder.Id + '-' + idx;
       var prefix = homeworkFilePrefix(item.label);
       var itemFiles = files.filter(function(f) { return f.Name.indexOf(prefix) === 0; });
       itemFiles.forEach(function(f) { matchedIds[f.Id] = true; });
+      if (itemFiles.length > 0) itemsFilledCount++;
 
       var countSpan = document.getElementById('hwcount-' + itemId);
       var filesDiv  = document.getElementById('hwfiles-' + itemId);
@@ -3929,6 +3956,12 @@ function refreshHomeworkCategoryFiles(folder, category) {
         wireHomeworkDownloadButtons(filesDiv);
       }
     });
+
+    // Report item-level fill count to the progress tracker (drives the
+    // overall bar) — NOT just whether the folder has any file at all.
+    if (FileCache.reportCategoryStatus) {
+      FileCache.reportCategoryStatus(folder.Id, itemsFilledCount, category.items.length);
+    }
 
     // Catch-all for unmatched files (e.g. legacy uploads, or staff-added docs)
     var unmatched = files.filter(function(f) { return !matchedIds[f.Id]; });
